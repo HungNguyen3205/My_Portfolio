@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nguyễn Nam Hùng - Portfolio</title>
+    <meta name="description" content="Portfolio of Nguyễn Nam Hùng - Fullstack Developer">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background Glow Effects -->
+    <div class="bg-glow glow-1"></div>
+    <div class="bg-glow glow-2"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="logo">&lt;NamHung /&gt;</div>
+        <ul class="nav-links">
+            <li><a href="#home">.home()</a></li>
+            <li><a href="#about">.about()</a></li>
+            <li><a href="#projects">.projects()</a></li>
+            <li><a href="#contact">.contact()</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <!-- Home Section -->
+        <section id="home" class="hero">
+            <div class="hero-content">
+                <p class="code-comment">// Hello, World!</p>
+                <h1>Nguyễn Nam Hùng</h1>
+                <h2 class="typing-text">I am a <span id="typed"></span></h2>
+                <p class="description">
+                    Motivated and self-driven Fullstack Developer with hands-on experience in building web applications, automation systems, and blockchain-based projects. Strong foundation in software engineering, data structures, and modern web technologies. Passionate about creating scalable products and continuously learning new technologies to solve real-world problems.
+                </p>
+                <div class="cta-buttons">
+                    <a href="#projects" class="btn primary-btn">View Projects</a>
+                    <a href="#contact" class="btn secondary-btn">Contact Me</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="about">
+            <h2 class="section-title"><span>01.</span> About Me</h2>
+            <div class="about-content">
+                <div class="about-text text-box">
+                    <pre><code class="language-js">
+const profile = {
+    name: "Nguyễn Nam Hùng",
+    role: "Fullstack Developer",
+    location: "Nha Trang, Vietnam",
+    education: "Duy Tan University (2023 - Present)",
+    skills: {
+        frontend: ["HTML", "CSS", "JS", "React.js", "Vue.js"],
+        backend: ["Java", "REST APIs", "Node.js", "Laravel", "Spring Boot"],
+        database: ["Microsoft Access", "MySQL", "MongoDB"],
+        tools: ["Git", "NetBeans", "n8n", "AI Tools"]
+    },
+    languages: ["Vietnamese (Native)", "English (Intermediate)"]
+};
+                    </code></pre>
+                </div>
+                <div class="about-description description">
+                    <!-- Additional Experience -->
+                    <h3 class="code-heading">📝 ADDITIONAL EXPERIENCE //</h3>
+                    <ul class="soft-skills" style="margin-bottom: 2rem;">
+                        <li><span class="prompt">~</span> Practiced solving problems in probability, combinatorics, and algorithms</li>
+                        <li><span class="prompt">~</span> Implemented data structures such as singly linked lists in Java</li>
+                        <li><span class="prompt">~</span> Experience with debugging, logical thinking, and step-by-step problem solving</li>
+                    </ul>
+
+                    <!-- Soft Skills -->
+                    <h3 class="code-heading">🧠 SOFT SKILLS //</h3>
+                    <ul class="soft-skills">
+                        <li><span class="prompt">~</span> Strong problem-solving mindset</li>
+                        <li><span class="prompt">~</span> Self-learning and adaptability</li>
+                        <li><span class="prompt">~</span> Time management and independent work</li>
+                        <li><span class="prompt">~</span> Analytical thinking and attention to detail</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Profile Images / Gallery section -->
+            <h3 class="subsection-title">My Portraits // Hình Ảnh Cá Nhân</h3>
+            <div class="profile-gallery">
+                <div class="gallery-card">
+                    <img src="avata.jpg" alt="Nguyễn Nam Hùng - Portrait 1" class="profile-img">
+                </div>
+                <div class="gallery-card">
+                    <img src="anh1.jpg" alt="Nguyễn Nam Hùng - Portrait 2" class="profile-img">
+                </div>
+                <div class="gallery-card">
+                    <img src="anh3.jpg" alt="Nguyễn Nam Hùng - Portrait 3" class="profile-img">
+                </div>
+                
+            </div>
+        </section>
+
+        <!-- Projects Section -->
+        <section id="projects" class="projects">
+            <h2 class="section-title"><span>02.</span> Projects</h2>
+            <div class="project-grid">
+                <!-- Project 1 -->
+                <div class="project-card">
+                    <div class="project-info">
+                        <h3>🛒 Grocery Management System</h3>
+                        <p class="tech-subtitle">&gt; Microsoft Access</p>
+                        <ul class="project-bullets">
+                            <li>Designed and built a database system for managing inventory, sales, and basic reporting</li>
+                            <li>Implemented forms, queries, and reports to streamline store operations</li>
+                            <li>Improved data organization and usability for non-technical users</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Project 2 -->
+                <div class="project-card">
+                    <div class="project-info">
+                        <h3>🔗 Blockchain Portfolio Project</h3>
+                        <p class="tech-subtitle">&gt; DeFi Concept – PoC</p>
+                        <ul class="project-bullets">
+                            <li>Developing a proof-of-concept decentralized application using Chainlink</li>
+                            <li>Focused on integrating smart contract data and frontend interaction</li>
+                            <li>Aimed at demonstrating understanding of Web3 architecture and data feeds</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                 <!-- Project 3 -->
+                <div class="project-card">
+                    <div class="project-info">
+                        <h3>🤖 AI Automation System</h3>
+                        <p class="tech-subtitle">&gt; n8n + AI Tools</p>
+                        <ul class="project-bullets">
+                            <li>Built automated workflows using n8n to generate and process AI content</li>
+                            <li>Integrated tools like Veo3 and Nano Banana for content creation pipelines</li>
+                            <li>Reduced manual work in content production and improved efficiency</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Project 4 -->
+                 <div class="project-card">
+                    <div class="project-info">
+                        <h3>🎥 YouTube Automation Channel</h3>
+                        <p class="tech-subtitle">&gt; "Reverse Mindset"</p>
+                        <ul class="project-bullets">
+                            <li>Created and managed a content channel focused on life lessons and reverse thinking</li>
+                            <li>Applied AI tools for script generation, video production, and optimization</li>
+                            <li>Worked on SEO strategies including titles, hashtags, and posting timing</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="contact">
+            <h2 class="section-title"><span>03.</span> Contact</h2>
+            <div class="contact-content">
+                <p class="description" style="margin-bottom: 2rem;">I am always open to new opportunities and interesting projects. Let's connect!</p>
+                <div class="terminal-contact">
+                    <div class="terminal-header">
+                        <span class="dot red"></span>
+                        <span class="dot yellow"></span>
+                        <span class="dot green"></span>
+                    </div>
+                    <div class="terminal-body">
+                        <p><span class="prompt">~</span> <span class="command">ping</span> contact-info</p>
+                        <p><span class="prompt">~</span> email: <a href="mailto:namhung03022005@gmail.com" class="highlight">namhung03022005@gmail.com</a></p>
+                        <p><span class="prompt">~</span> phone: <span class="highlight">0971120038</span></p>
+                        <p><span class="prompt">~</span> github: <a href="#" target="_blank" class="highlight">https://github.com/HungNguyen3205</a></p>
+                        <p><span class="prompt">~</span> location: <span class="highlight">Nha Trang, Vietnam</span></p>
+                        <p><span class="prompt">~</span><span class="blink">_</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Built with <span style="color: #e25555;">&hearts;</span> and code by Nguyễn Nam Hùng</p>
+        <p class="small">Powered by modern web stack & elegant aesthetics.</p>
+    </footer>
+
+    <!-- GSAP for Smooth Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <!-- Typed.js for the typing effect -->
+    <script src="https://unpkg.com/typed.js@2.0.16/dist/typed.umd.js"></script>
+    <!-- Lenis for buttery smooth scrolling -->
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.32/dist/lenis.min.js"></script>
+    
+    <!-- Custom Script -->
+    <script src="script.js"></script>
+</body>
+</html>
