@@ -1,0 +1,18 @@
+(()=>{
+ const stage=document.getElementById('avatar-stage');if(!stage)return;
+ const character=stage.querySelector('.avatar-character'),button=document.getElementById('avatar-motion'),caption=document.getElementById('avatar-caption');
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)'),fine=matchMedia('(hover: hover) and (pointer: fine)');
+ let ready=false,paused=false,visible=true,blinkTimer=0,blinkEnd=0,gazeTimer=0,frame=0,blinking=false,gaze='center',pointer=null;
+ const timersOff=()=>{clearTimeout(blinkTimer);clearTimeout(blinkEnd);clearTimeout(gazeTimer);cancelAnimationFrame(frame);frame=0;blinking=false;};
+ const enabled=()=>ready&&!paused&&!reduced.matches&&visible&&!document.hidden;
+ function setState(state){character.dataset.state=state;}
+ function scheduleBlink(){clearTimeout(blinkTimer);if(!enabled())return;blinkTimer=setTimeout(()=>{if(!enabled())return;blinking=true;setState('blink');blinkEnd=setTimeout(()=>{blinking=false;setState(gaze);scheduleBlink();},150);},3800+Math.random()*2400);}
+ function refresh(){timersOff();stage.classList.toggle('motion-paused',paused||reduced.matches);stage.classList.toggle('motion-offscreen',!visible||document.hidden);stage.style.setProperty('--pointer-x','0px');stage.style.setProperty('--pointer-y','0px');gaze='center';setState('center');button.setAttribute('aria-pressed',String(paused||reduced.matches));button.textContent=paused||reduced.matches?'▶':'Ⅱ';button.setAttribute('aria-label',paused?'Bật chuyển động nhân vật':'Tạm dừng chuyển động nhân vật');button.disabled=reduced.matches;caption.textContent=reduced.matches?'Chuyển động đã giảm theo cài đặt thiết bị':paused?'Chuyển động đã tạm dừng':fine.matches?'Di chuyển chuột — Hùng sẽ nhìn theo bạn':'Xin chào, mình là Hùng 👋';scheduleBlink();}
+ button.addEventListener('click',()=>{paused=!paused;refresh();});
+ function updatePointer(){frame=0;if(!enabled()||!fine.matches||!pointer)return;const box=stage.getBoundingClientRect();const x=(pointer.x-(box.left+box.width*.5))/box.width,y=(pointer.y-(box.top+box.height*.35))/box.height;const next=Math.abs(x)>.25&&Math.abs(x)>Math.abs(y)*.7?(x<0?'left':'right'):y<-.13?'up':y>.2?'down':'center';stage.style.setProperty('--pointer-x',Math.max(-2,Math.min(2,x*2)).toFixed(2)+'px');stage.style.setProperty('--pointer-y',Math.max(-2,Math.min(2,y*2)).toFixed(2)+'px');clearTimeout(gazeTimer);gazeTimer=setTimeout(()=>{if(!enabled())return;gaze=next;if(!blinking)setState(gaze);},70);}
+ document.addEventListener('pointermove',event=>{if(event.pointerType==='touch'||!enabled()||!fine.matches)return;pointer={x:event.clientX,y:event.clientY};if(!frame)frame=requestAnimationFrame(updatePointer);},{passive:true});
+ document.documentElement.addEventListener('pointerleave',()=>{clearTimeout(gazeTimer);gaze='center';setState('center');stage.style.setProperty('--pointer-x','0px');stage.style.setProperty('--pointer-y','0px');});
+ document.addEventListener('visibilitychange',refresh);reduced.addEventListener('change',refresh);fine.addEventListener('change',refresh);
+ if('IntersectionObserver' in window){new IntersectionObserver(entries=>{const next=entries[0].isIntersecting;if(next!==visible){visible=next;refresh();}},{threshold:.1}).observe(stage);}
+ Promise.all(['assets/hung-states.webp','assets/hung-icons.webp'].map(src=>new Promise((resolve,reject)=>{const img=new Image();img.onload=resolve;img.onerror=reject;img.src=src;}))).then(()=>{ready=true;stage.classList.add('avatar-ready');refresh();}).catch(()=>{caption.textContent='Nguyễn Nam Hùng · Fullstack Developer';});
+})();
