@@ -11,16 +11,15 @@
   const caption = document.getElementById('avatar-caption');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const { width, height } = canvas;
-  const frameCount = 239;
+  // Frames 211–238 are a repeated frontal hold. Skip that tail on turns.
+  const frameCount = 211;
   const stripSize = 16;
   const stripCount = Math.ceil(frameCount / stripSize);
   const sheets = new Map();
   // Clockwise poses from the original take, starting at screen right.
   const poses = [145, 176, 193, 19, 43, 60, 79, 105];
   // The end of the source take contains a short glance toward the laptop.
-  const blinkPose = 194;
   const workPose = 200;
-  let finishBlink = false;
   const inactivityDelay = 850;
   let idleTimer;
   let position = 0;
@@ -90,10 +89,6 @@
       position = next;
       velocity = nextVelocity;
     }
-    if (finishBlink && position === target) {
-      finishBlink = false;
-      target = workPose;
-    }
     if (Math.abs(distance(position, target)) >= 0.01) {
       request = requestAnimationFrame(tick);
     } else {
@@ -102,26 +97,24 @@
   }
 
   function moveTo(frame) {
+    if (target === frame && position === frame) return;
     target = frame;
     if (ready && !request) request = requestAnimationFrame(tick);
   }
 
   function idle() {
     clearTimeout(idleTimer);
-    finishBlink = false;
     if (paused || reduced.matches) {
       moveTo(Math.abs(distance(position, 0)) < Math.abs(distance(position, 210)) ? 0 : 210);
       return;
     }
-    finishBlink = true;
-    moveTo(blinkPose);
+    moveTo(workPose);
   }
 
   function follow(event) {
     if (!ready || paused || reduced.matches) return;
     clearTimeout(idleTimer);
     idleTimer = setTimeout(idle, inactivityDelay);
-    finishBlink = false;
     const bounds = (event.pointerType === 'touch' ? canvas : hero).getBoundingClientRect();
     const x = (event.clientX - bounds.left) / bounds.width * 2 - 1;
     const y = (event.clientY - bounds.top) / bounds.height * 2 - 1;
@@ -140,7 +133,6 @@
 
   function refresh() {
     clearTimeout(idleTimer);
-    finishBlink = false;
     const stopped = paused || reduced.matches;
     button.disabled = reduced.matches;
     button.setAttribute('aria-pressed', String(stopped));
