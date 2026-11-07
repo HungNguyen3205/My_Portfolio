@@ -10,130 +10,153 @@
   const button = document.getElementById('avatar-motion');
   const caption = document.getElementById('avatar-caption');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  const hover = matchMedia('(any-hover: hover)');
-  const sheet = new Image();
   const { width, height } = canvas;
-
-  // The source performs several gestures. Scrub only the outward turn
-  // on each side, reversing it as the pointer approaches the center.
-  const idle = 0;
-  const left = [idle, 1, 2, ...Array.from({ length: 11 }, (_, index) => 10 + index)];
-  const right = [idle, ...Array.from({ length: 16 }, (_, index) => 53 + index)];
-
-  let ready = false;
-  let paused = false;
-  let visible = true;
-  let target = 0;
+  const frameCount = 239;
+  const stripSize = 16;
+  const stripCount = Math.ceil(frameCount / stripSize);
+  const sheets = new Map();
+  // Clockwise poses from the original take, starting at screen right.
+  const poses = [145, 176, 193, 19, 43, 60, 79, 105];
   let position = 0;
-  let request = 0;
+  let target = 0;
   let previousTime = 0;
+  let request = 0;
   let lastFrame = -1;
+  let paused = false;
+  let ready = false;
   let touchId = null;
 
-  const canMove = () => ready && !paused && !reduced.matches && visible && !document.hidden;
+  const wrap = frame => ((frame % frameCount) + frameCount) % frameCount;
+  const distance = (from, to) => wrap(to - from + frameCount / 2) - frameCount / 2;
+  const stripFor = frame => Math.floor(frame / stripSize);
 
-  function draw() {
-    const sequence = position < 0 ? left : right;
-    const index = Math.round(Math.abs(position) * (sequence.length - 1));
-    const frame = sequence[index];
-    if (frame === lastFrame) return;
-    context.drawImage(sheet, frame * width, 0, width, height, 0, 0, width, height);
-    lastFrame = frame;
+  function getStrip(index) {
+    if (sheets.has(index)) return sheets.get(index);
+    const sheet = { bitmap: null };
+    const image = new Image();
+    image.src = `assets/hero-motion/${String(index).padStart(2, '0')}.webp`;
+    sheet.loaded = image.decode().then(() => {
+      sheet.bitmap = image;
+    }).catch(() => {
+      sheet.failed = true;
+    });
+    sheets.set(index, sheet);
+    return sheet;
+  }
+
+  function draw(frame) {
+    const index = stripFor(frame);
+    const sheet = getStrip(index);
+    getStrip((index + 1) % stripCount);
+    getStrip((index + stripCount - 1) % stripCount);
+    // Keep the current strip and both neighbors available for direction reversals.
+    for (const key of sheets.keys()) {
+      const gap = Math.abs(key - index);
+      if (gap > 1 && gap < stripCount - 1) sheets.delete(key);
+    }
+    if (!sheet.bitmap) return false;
+    if (frame !== lastFrame) {
+      context.drawImage(sheet.bitmap, (frame % stripSize) * width, 0, width, height, 0, 0, width, height);
+      lastFrame = frame;
+    }
+    return true;
   }
 
   function tick(time) {
     request = 0;
-    if (!canMove()) return;
-
-    const elapsed = previousTime ? Math.min(time - previousTime, 50) : 1000 / 60;
+    const elapsed = previousTime ? Math.min(time - previousTime, 40) : 16.7;
     previousTime = time;
-    const easing = 1 - Math.exp(-elapsed / 135);
-    const step = elapsed / 225;
-    const delta = (target - position) * easing;
-    position += Math.max(-step, Math.min(step, delta));
-
-    if (Math.abs(target - position) < 0.001) {
-      position = target;
+    const delta = distance(position, target);
+    const limit = elapsed * 0.065;
+    const eased = delta * (1 - Math.exp(-elapsed / 145));
+    const next = wrap(Math.abs(delta) < 0.35
+      ? target : position + Math.max(-limit, Math.min(limit, eased)));
+    const frame = wrap(Math.round(next));
+    if (getStrip(stripFor(frame)).failed) {
       previousTime = 0;
-      draw();
       return;
     }
-
-    draw();
-    request = requestAnimationFrame(tick);
+    if (draw(frame)) position = next;
+    if (Math.abs(distance(position, target)) >= 0.01) {
+      request = requestAnimationFrame(tick);
+    } else {
+      previousTime = 0;
+    }
   }
 
-  function moveTo(value) {
-    target = value;
-    if (canMove() && !request) request = requestAnimationFrame(tick);
+  function moveTo(frame) {
+    target = frame;
+    if (ready && !request) request = requestAnimationFrame(tick);
+  }
+
+  function idle() {
+    // The final part of the take returns to the same frontal pose.
+    moveTo(Math.abs(distance(position, 0)) < Math.abs(distance(position, 210)) ? 0 : 210);
   }
 
   function follow(event) {
-    if (!canMove()) return;
+    if (!ready || paused || reduced.matches) return;
     const bounds = (event.pointerType === 'touch' ? canvas : hero).getBoundingClientRect();
-    const offset = (event.clientX - bounds.left) / bounds.width;
-    moveTo(Math.max(-1, Math.min(1, (offset - 0.5) / 0.44)));
+    const x = (event.clientX - bounds.left) / bounds.width * 2 - 1;
+    const y = (event.clientY - bounds.top) / bounds.height * 2 - 1;
+    if (Math.hypot(x, y) < 0.23) {
+      idle();
+      return;
+    }
+    const angle = (Math.atan2(y, x) + 2 * Math.PI) % (2 * Math.PI);
+    const sector = angle / (Math.PI / 4);
+    const index = Math.floor(sector);
+    const start = poses[index];
+    const end = poses[(index + 1) % poses.length];
+    moveTo(wrap(start + distance(start, end) * (sector - index)));
   }
 
   function refresh() {
-    cancelAnimationFrame(request);
-    request = previousTime = 0;
-    position = target = 0;
-    touchId = null;
-    if (ready) draw();
-
     const stopped = paused || reduced.matches;
     button.disabled = reduced.matches;
     button.setAttribute('aria-pressed', String(stopped));
     button.setAttribute('aria-label', stopped ? 'Bật chuyển động nhân vật' : 'Tạm dừng chuyển động nhân vật');
     button.textContent = stopped ? '▶' : 'Ⅱ';
-    caption.textContent = reduced.matches ? 'Chuyển động đã giảm theo cài đặt thiết bị'
-      : paused ? 'Chuyển động đã tạm dừng'
-      : hover.matches ? 'Di chuyển chuột — Hùng sẽ nhìn theo bạn'
-      : 'Chạm hoặc kéo ngang để Hùng nhìn theo';
+    caption.textContent = stopped ? 'Chuyển động đã tạm dừng' : 'Rê chuột hoặc chạm để Hùng nhìn theo';
+    if (reduced.matches) {
+      cancelAnimationFrame(request);
+      request = previousTime = 0;
+      getStrip(0).loaded.then(() => {
+        if (reduced.matches && draw(0)) position = target = 0;
+      });
+    } else {
+      idle();
+    }
   }
 
   hero.addEventListener('pointermove', event => {
     if (event.pointerType !== 'touch' || event.pointerId === touchId) follow(event);
   }, { passive: true });
-  hero.addEventListener('pointerleave', () => moveTo(0));
+  hero.addEventListener('pointerleave', () => {
+    if (!reduced.matches) idle();
+  });
   canvas.addEventListener('pointerdown', event => {
-    if (event.pointerType !== 'touch' || !canMove()) return;
+    if (event.pointerType !== 'touch') return;
     touchId = event.pointerId;
     follow(event);
   }, { passive: true });
   function endTouch(event) {
     if (event.pointerId !== touchId) return;
     touchId = null;
-    moveTo(0);
+    if (!reduced.matches) idle();
   }
   window.addEventListener('pointerup', endTouch);
   window.addEventListener('pointercancel', endTouch);
-  window.addEventListener('blur', () => moveTo(0));
   button.addEventListener('click', () => {
     paused = !paused;
     refresh();
   });
-  document.addEventListener('visibilitychange', refresh);
   reduced.addEventListener('change', refresh);
-  hover.addEventListener('change', refresh);
 
-  if ('IntersectionObserver' in window) {
-    new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting;
-      if (!visible) refresh();
-    }).observe(stage);
-  }
-
-  sheet.src = 'assets/hung-motion-bright.jpg';
-  sheet.decode().then(() => {
-    if (sheet.naturalWidth !== width * 119 || sheet.naturalHeight !== height) {
-      throw new Error('Unexpected sprite dimensions');
-    }
+  getStrip(0).loaded.then(() => {
+    if (!draw(0)) return;
     ready = true;
-    refresh();
     stage.classList.add('avatar-ready');
-  }).catch(() => {
-    caption.textContent = 'Nguyễn Nam Hùng · Fullstack Developer';
+    refresh();
   });
 })();
