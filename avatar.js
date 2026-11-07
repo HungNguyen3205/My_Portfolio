@@ -27,6 +27,7 @@
   let previousTime = 0;
   let velocity = 0;
   let inIdleZone = true;
+  let gazeSector = null;
   let request = 0;
   let lastFrame = -1;
   let paused = false;
@@ -35,6 +36,15 @@
 
   const wrap = frame => ((frame % frameCount) + frameCount) % frameCount;
   const distance = (from, to) => wrap(to - from + frameCount / 2) - frameCount / 2;
+  function turnDistance(from, to) {
+    const left = frame => frame > 0 && frame <= 60;
+    const right = frame => frame >= 105 && frame < 211;
+    // Side-to-side turns pass through the frontal pose instead of looking up.
+    if (left(from) && right(to)) return -wrap(from - to);
+    if (right(from) && left(to)) return wrap(to - from);
+    return distance(from, to);
+  }
+
   const stripFor = frame => Math.floor(frame / stripSize);
 
   function getStrip(index) {
@@ -72,12 +82,13 @@
     request = 0;
     const elapsed = previousTime ? Math.min(time - previousTime, 40) : 16.7;
     previousTime = time;
-    const delta = distance(position, target);
+    const delta = turnDistance(position, target);
     // Ease velocity itself so a new pointer target cannot snap the playback speed.
     const desiredVelocity = Math.max(-0.046, Math.min(0.046, delta / 185));
     const nextVelocity = velocity + (desiredVelocity - velocity) * (1 - Math.exp(-elapsed / 75));
     // At most one source frame per paint, even after a slow display refresh.
-    const step = Math.max(-0.95, Math.min(0.95, nextVelocity * elapsed));
+    const step = Math.sign(nextVelocity) === Math.sign(delta)
+      ? Math.max(-0.95, Math.min(0.95, nextVelocity * elapsed)) : 0;
     const reachesTarget = Math.sign(step) === Math.sign(delta) && Math.abs(step) >= Math.abs(delta);
     const next = wrap(Math.abs(delta) < 0.35 || reachesTarget ? target : position + step);
     const frame = wrap(Math.round(next));
@@ -104,6 +115,7 @@
 
   function idle() {
     clearTimeout(idleTimer);
+    gazeSector = null;
     if (paused || reduced.matches) {
       moveTo(Math.abs(distance(position, 0)) < Math.abs(distance(position, 210)) ? 0 : 210);
       return;
@@ -125,10 +137,13 @@
     }
     const angle = (Math.atan2(y, x) + 2 * Math.PI) % (2 * Math.PI);
     const sector = angle / (Math.PI / 4);
-    const index = Math.floor(sector);
-    const start = poses[index];
-    const end = poses[(index + 1) % poses.length];
-    moveTo(wrap(start + distance(start, end) * (sector - index)));
+    const nearest = Math.round(sector) % poses.length;
+    if (gazeSector !== null) {
+      const gap = Math.abs(sector - gazeSector);
+      if (Math.min(gap, poses.length - gap) < 0.62) return;
+    }
+    gazeSector = nearest;
+    moveTo(poses[gazeSector]);
   }
 
   function refresh() {
