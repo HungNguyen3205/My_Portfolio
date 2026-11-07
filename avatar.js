@@ -20,6 +20,8 @@
   let position = 0;
   let target = 0;
   let previousTime = 0;
+  let velocity = 0;
+  let inIdleZone = true;
   let request = 0;
   let lastFrame = -1;
   let paused = false;
@@ -67,20 +69,28 @@
     const elapsed = previousTime ? Math.min(time - previousTime, 40) : 16.7;
     previousTime = time;
     const delta = distance(position, target);
-    const limit = elapsed * 0.065;
-    const eased = delta * (1 - Math.exp(-elapsed / 145));
-    const next = wrap(Math.abs(delta) < 0.35
-      ? target : position + Math.max(-limit, Math.min(limit, eased)));
+    // Ease velocity itself so a new pointer target cannot snap the playback speed.
+    const desiredVelocity = Math.max(-0.052, Math.min(0.052, delta / 170));
+    const nextVelocity = velocity + (desiredVelocity - velocity) * (1 - Math.exp(-elapsed / 75));
+    // At most one source frame per paint, even after a slow display refresh.
+    const step = Math.max(-0.95, Math.min(0.95, nextVelocity * elapsed));
+    const reachesTarget = Math.sign(step) === Math.sign(delta) && Math.abs(step) >= Math.abs(delta);
+    const next = wrap(Math.abs(delta) < 0.35 || reachesTarget ? target : position + step);
     const frame = wrap(Math.round(next));
     if (getStrip(stripFor(frame)).failed) {
-      previousTime = 0;
+      previousTime = velocity = 0;
       return;
     }
-    if (draw(frame)) position = next;
+    if (draw(frame)) {
+      position = next;
+      velocity = nextVelocity;
+    } else {
+      velocity = 0;
+    }
     if (Math.abs(distance(position, target)) >= 0.01) {
       request = requestAnimationFrame(tick);
     } else {
-      previousTime = 0;
+      previousTime = velocity = 0;
     }
   }
 
@@ -99,7 +109,9 @@
     const bounds = (event.pointerType === 'touch' ? canvas : hero).getBoundingClientRect();
     const x = (event.clientX - bounds.left) / bounds.width * 2 - 1;
     const y = (event.clientY - bounds.top) / bounds.height * 2 - 1;
-    if (Math.hypot(x, y) < 0.23) {
+    const radius = Math.hypot(x, y);
+    inIdleZone = radius < (inIdleZone ? 0.26 : 0.20);
+    if (inIdleZone) {
       idle();
       return;
     }
@@ -120,7 +132,7 @@
     caption.textContent = stopped ? 'Chuyển động đã tạm dừng' : 'Rê chuột hoặc chạm để Hùng nhìn theo';
     if (reduced.matches) {
       cancelAnimationFrame(request);
-      request = previousTime = 0;
+      request = previousTime = velocity = 0;
       getStrip(0).loaded.then(() => {
         if (reduced.matches && draw(0)) position = target = 0;
       });
@@ -133,6 +145,7 @@
     if (event.pointerType !== 'touch' || event.pointerId === touchId) follow(event);
   }, { passive: true });
   hero.addEventListener('pointerleave', () => {
+    inIdleZone = true;
     if (!reduced.matches) idle();
   });
   canvas.addEventListener('pointerdown', event => {
