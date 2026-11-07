@@ -7,10 +7,24 @@
  const active=()=>ready&&!paused&&!reduced.matches&&visible&&!document.hidden;
  function show(state){character.dataset.state=state;layers.forEach(layer=>layer.classList.toggle('is-active',layer.dataset.gaze===state));}
  function paint(){stage.style.setProperty('--character-x',(current.x*9).toFixed(3)+'px');stage.style.setProperty('--character-y',(current.y*5).toFixed(3)+'px');stage.style.setProperty('--character-rx',(-current.y*1.7).toFixed(3)+'deg');stage.style.setProperty('--character-ry',(current.x*2.3).toFixed(3)+'deg');stage.style.setProperty('--orbit-x',(-current.x*13).toFixed(3)+'px');stage.style.setProperty('--orbit-y',(-current.y*9).toFixed(3)+'px');}
- function tick(time){frame=0;if(!active())return;const dt=Math.min(50,lastTime?time-lastTime:16.67);lastTime=time;const amount=1-Math.exp(-dt/105);current.x+=(target.x-current.x)*amount;current.y+=(target.y-current.y)*amount;paint();let next='center';if(Math.abs(current.x)>.32&&Math.abs(current.x)>Math.abs(current.y)*.95)next=current.x<0?'left':'right';else if(current.y<-.34)next='up';else if(current.y>.38)next='down';if(next!==candidate){candidate=next;candidateAt=time;}if(candidate!==gaze&&time-candidateAt>105){gaze=candidate;if(!blinking)show(gaze);}const moving=Math.abs(target.x-current.x)+Math.abs(target.y-current.y)>.001;if(moving||candidate!==gaze)frame=requestAnimationFrame(tick);else lastTime=0;}
+ function tick(time){
+  frame=0;if(!active())return;
+  const dt=Math.min(50,lastTime?time-lastTime:16.67);lastTime=time;
+  const amount=1-Math.exp(-dt/150);
+  current.x+=(target.x-current.x)*amount;current.y+=(target.y-current.y)*amount;
+  paint();
+  // Continuous weights avoid jumping when the pointer crosses a direction threshold.
+  const x=current.x*.72,y=current.y*.55;
+  const weights={left:Math.max(0,-x),right:Math.max(0,x),up:Math.max(0,-y),down:Math.max(0,y)};
+  const sum=Object.values(weights).reduce((a,b)=>a+b,0);
+  weights.center=Math.max(0,1-sum);const total=Math.max(1,sum);
+  layers.forEach(layer=>{const weight=(weights[layer.dataset.gaze]||0)/total;layer.style.opacity=weight.toFixed(4);});
+  const moving=Math.abs(target.x-current.x)+Math.abs(target.y-current.y)>.0002;
+  if(moving)frame=requestAnimationFrame(tick);else lastTime=0;
+ }
  function animate(){if(active()&&!frame)frame=requestAnimationFrame(tick);}
- function blink(){clearTimeout(blinkTimer);if(!active())return;blinkTimer=setTimeout(()=>{if(!active())return;blinking=true;show('blink');blinkEnd=setTimeout(()=>{blinking=false;show(gaze);blink();},145);},4200+Math.random()*2200);}
- function refresh(){clearTimeout(blinkTimer);clearTimeout(blinkEnd);cancelAnimationFrame(frame);frame=0;lastTime=0;blinking=false;target.x=target.y=current.x=current.y=0;gaze=candidate='center';show('center');paint();stage.classList.toggle('motion-paused',paused||reduced.matches);stage.classList.toggle('motion-offscreen',!visible||document.hidden);button.disabled=reduced.matches;button.setAttribute('aria-pressed',String(paused||reduced.matches));button.textContent=paused||reduced.matches?'▶':'Ⅱ';button.setAttribute('aria-label',paused?'Bật chuyển động nhân vật':'Tạm dừng chuyển động nhân vật');caption.textContent=reduced.matches?'Chuyển động đã giảm theo cài đặt thiết bị':paused?'Chuyển động đã tạm dừng':fine.matches?'Di chuyển chuột — Hùng sẽ nhìn theo bạn':'Xin chào, mình là Hùng 👋';blink();}
+ function blink(){}
+ function refresh(){clearTimeout(blinkTimer);clearTimeout(blinkEnd);cancelAnimationFrame(frame);frame=0;lastTime=0;blinking=false;target.x=target.y=current.x=current.y=0;gaze=candidate='center';layers.forEach(layer=>layer.style.opacity=layer.dataset.gaze==='center'?'1':'0');show('center');paint();stage.classList.toggle('motion-paused',paused||reduced.matches);stage.classList.toggle('motion-offscreen',!visible||document.hidden);button.disabled=reduced.matches;button.setAttribute('aria-pressed',String(paused||reduced.matches));button.textContent=paused||reduced.matches?'▶':'Ⅱ';button.setAttribute('aria-label',paused?'Bật chuyển động nhân vật':'Tạm dừng chuyển động nhân vật');caption.textContent=reduced.matches?'Chuyển động đã giảm theo cài đặt thiết bị':paused?'Chuyển động đã tạm dừng':fine.matches?'Di chuyển chuột — Hùng sẽ nhìn theo bạn':'Xin chào, mình là Hùng 👋';blink();}
  function measure(){bounds=stage.getBoundingClientRect();}
  button.addEventListener('click',()=>{paused=!paused;refresh();});document.addEventListener('pointermove',event=>{if(event.pointerType==='touch'||!fine.matches||!active())return;if(!bounds)measure();target.x=Math.max(-1,Math.min(1,(event.clientX-(bounds.left+bounds.width*.5))/(bounds.width*.48)));target.y=Math.max(-1,Math.min(1,(event.clientY-(bounds.top+bounds.height*.32))/(bounds.height*.45)));animate();},{passive:true});document.documentElement.addEventListener('pointerleave',()=>{target.x=target.y=0;animate();});
  window.addEventListener('resize',measure,{passive:true});window.addEventListener('scroll',measure,{passive:true});document.addEventListener('visibilitychange',refresh);reduced.addEventListener('change',refresh);fine.addEventListener('change',refresh);if('ResizeObserver' in window)new ResizeObserver(measure).observe(stage);if('IntersectionObserver' in window)new IntersectionObserver(entries=>{const next=entries[0].isIntersecting;if(next!==visible){visible=next;refresh();}},{threshold:.1}).observe(stage);
