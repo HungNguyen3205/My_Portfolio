@@ -1,0 +1,49 @@
+.portfolio-intro {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: #111216;
+  overflow: hidden;
+}
+.portfolio-intro::backdrop { background: transparent; }
+.portfolio-intro video { width: 100%; height: 100%; object-fit: contain; display: block; }
+.intro-skip {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
+  padding: 10px 15px;
+  border: 1px solid #ffffff85;
+  border-radius: 999px;
+  background: #111216d9;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+body.intro-open { overflow: hidden; }
+.intro-reveal .portfolio-intro { animation: intro-out .8s cubic-bezier(.67,.05,.24,1) both; }
+.intro-reveal > header,
+.intro-reveal > main { animation: intro-page-in .8s cubic-bezier(.67,.05,.24,1) both; }
+.intro-reveal .hero-wordmark > span,
+.intro-reveal .hero-centered .avatar-stage {
+  animation: intro-rise .7s cubic-bezier(.18,.74,.3,1) both;
+}
+.intro-reveal .hero-wordmark > span { animation-delay: .36s; }
+.intro-reveal .hero-wordmark > span + span { animation-delay: .44s; }
+.intro-reveal .hero-centered .avatar-stage { animation-delay: .52s; }
+@keyframes intro-out { to { translate: 0 -100%; } }
+@keyframes intro-page-in { from { translate: 0 100vh; } }
+@keyframes intro-rise {
+  0% { opacity: 0; translate: 0 64px; }
+  67% { opacity: 1; translate: 0 -9px; }
+  100% { opacity: 1; translate: 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro-reveal *, .intro-reveal > main, .intro-reveal > header { animation-duration: .01ms !important; animation-delay: 0s !important; }
+}
