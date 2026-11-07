@@ -12,21 +12,34 @@
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const { width, height } = canvas;
 
-  // Tổng số khung hình quay vòng 360 độ từ source video
+  // Sử dụng toàn bộ 239 khung hình (15 strip) từ source video
   const frameCount = 239;
   const stripSize = 16;
   const stripCount = Math.ceil(frameCount / stripSize);
   const sheets = new Map();
 
-  // 8 hướng nhìn cơ bản từ góc 0 độ (bên phải) theo chiều kim đồng hồ:
+  // 8 điểm neo hướng nhìn theo chiều kim đồng hồ bắt đầu từ 0° (bên phải):
   // 0° (phải): 145, 45° (dưới-phải): 176, 90° (dưới): 193,
   // 135° (dưới-trái): 19, 180° (trái): 43, 225° (trên-trái): 60,
   // 270° (trên): 79, 315° (trên-phải): 105.
   const poses = [145, 176, 193, 19, 43, 60, 79, 105];
 
+  // Tính toán khung hình mục tiêu liên tục theo góc chuột (Continuous Analog Rotation)
+  // Không bị giật theo 8 góc cứng mà xoay mượt mà 360 độ theo mọi phân độ góc của chuột
+  function getContinuousPose(angle) {
+    const norm = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+    const sector = norm / (Math.PI / 4);
+    const i = Math.floor(sector);
+    const frac = sector - i;
+    const p0 = poses[i % 8];
+    const p1 = poses[(i + 1) % 8];
+    const delta = (i === 2) ? ((frameCount - p0) + p1) : (p1 - p0);
+    return ((p0 + delta * frac) % frameCount + frameCount) % frameCount;
+  }
+
   // Tư thế nhìn xuống laptop làm việc
   const workPose = 200;
-  // Thời gian giữ hướng nhìn khi chuột dừng di chuyển trong vùng tương tác
+  // Thời gian giữ ánh nhìn khi chuột dừng di chuyển trong vùng tương tác
   const inactivityDelay = 3500;
 
   let idleTimer;
@@ -34,7 +47,6 @@
   let target = 0;
   let previousTime = 0;
   let velocity = 0;
-  let gazeSector = null;
   let request = 0;
   let lastDrawnPos = -1;
   let paused = false;
@@ -45,7 +57,7 @@
   const distance = (from, to) => wrap(to - from + frameCount / 2) - frameCount / 2;
 
   function turnDistance(from, to) {
-    // Khi đổi giữa nhìn ngang trái (35–55) và ngang phải (135–160), đi qua phía trước
+    // Khi đổi giữa nhìn ngang trái (35–55) và ngang phải (135–160), đi qua phía trước mặt
     const isHorizLeft = f => f >= 35 && f <= 55;
     const isHorizRight = f => f >= 135 && f <= 160;
     if (isHorizLeft(from) && isHorizRight(to)) return -wrap(from - to);
@@ -69,15 +81,15 @@
     return sheet;
   }
 
-  // Tải trước toàn bộ các dải ảnh vào RAM
+  // Nạp trước toàn bộ các dải ảnh vào RAM để đảm bảo 0% drop frame
   function preloadAllStrips() {
     for (let i = 0; i <= stripCount; i++) {
       getStrip(i);
     }
   }
 
-  // Vẽ kết hợp nội suy khung hình phụ (Sub-frame Interpolation)
-  // Sinh thêm các khung hình trung gian mượt mà giữa các frame gốc
+  // Nội suy khung hình phụ (Sub-frame Interpolation)
+  // Tự động sinh thêm hàng loạt khung hình trung gian ảo mượt mà giữa các frame gốc
   function drawContinuous(pos) {
     if (pos === lastDrawnPos) return true;
     const f = wrap(pos);
@@ -88,15 +100,15 @@
     const sheet0 = getStrip(stripFor(f0));
     if (!sheet0.bitmap) return false;
 
-    // Khi ở rất sát khung hình gốc (hoặc khi dừng lại), vẽ trực tiếp sắc nét 100%
-    if (frac < 0.04) {
+    // Khi dừng hoặc ở cực gần frame gốc: vẽ nét căng 100%
+    if (frac < 0.02) {
       context.globalAlpha = 1.0;
       context.drawImage(sheet0.bitmap, (f0 % stripSize) * width, 0, width, height, 0, 0, width, height);
       lastDrawnPos = pos;
       return true;
     }
 
-    if (frac > 0.96) {
+    if (frac > 0.98) {
       const sheet1 = getStrip(stripFor(f1));
       if (!sheet1.bitmap) return false;
       context.globalAlpha = 1.0;
@@ -113,7 +125,7 @@
       return true;
     }
 
-    // Hòa trộn 2 khung hình kề nhau tạo khung hình trung gian siêu mượt (60fps/120fps motion smoothing)
+    // Hòa trộn 2 khung hình kề nhau theo tỷ lệ phần trăm chính xác (60fps/120fps motion smoothing)
     context.globalAlpha = 1.0;
     context.drawImage(sheet0.bitmap, (f0 % stripSize) * width, 0, width, height, 0, 0, width, height);
     context.globalAlpha = frac;
@@ -129,38 +141,47 @@
     previousTime = time;
     const delta = turnDistance(position, target);
 
-    // TĂNG TỐC ĐỘ: Vận tốc tối đa tăng lên 0.11 frames/ms (~110 fps playback), gia tốc nhạy với time constant 36ms
-    const desiredVelocity = Math.max(-0.11, Math.min(0.11, delta / 60));
-    const nextVelocity = velocity + (desiredVelocity - velocity) * (1 - Math.exp(-elapsed / 36));
+    // ĐIỀU TIẾT VẬN TỐC TỰ NHIÊN:
+    // Tốc độ cao nhưng giảm tốc cực êm dịu khi tới đích (không dừng đột ngột)
+    const desiredVelocity = Math.max(-0.13, Math.min(0.13, delta / 48));
+    const nextVelocity = velocity + (desiredVelocity - velocity) * (1 - Math.exp(-elapsed / 34));
 
-    // Bước nhảy frame cho phép lên tới 2.2 frame mỗi tick, phản hồi tức thì với chuột
+    // Bước dịch chuyển mượt mà
     const step = Math.max(-2.2, Math.min(2.2, nextVelocity * elapsed));
-    const reachesTarget = Math.abs(delta) < 0.25 || (Math.sign(step) === Math.sign(delta) && Math.abs(step) >= Math.abs(delta));
-    const next = reachesTarget ? target : wrap(position + step);
 
+    // Đáp đích êm ái: chỉ dừng hẳn khi khoảng cách cực nhỏ và vận tốc đã triệt tiêu
+    if (Math.abs(delta) < 0.05 && Math.abs(nextVelocity) < 0.008) {
+      position = target;
+      velocity = 0;
+      previousTime = 0;
+      drawContinuous(target);
+      return;
+    }
+
+    const next = wrap(position + step);
     if (drawContinuous(next)) {
       position = next;
       velocity = nextVelocity;
     }
 
-    if (Math.abs(turnDistance(position, target)) >= 0.15) {
+    if (Math.abs(turnDistance(position, target)) >= 0.05 || Math.abs(velocity) >= 0.008) {
       request = requestAnimationFrame(tick);
     } else {
       position = target;
-      previousTime = velocity = 0;
+      velocity = 0;
+      previousTime = 0;
       drawContinuous(target);
     }
   }
 
   function moveTo(frame) {
-    if (target === frame && Math.abs(turnDistance(position, frame)) < 0.15) return;
+    if (target === frame && Math.abs(turnDistance(position, frame)) < 0.05) return;
     target = frame;
     if (ready && !request) request = requestAnimationFrame(tick);
   }
 
   function idle() {
     clearTimeout(idleTimer);
-    gazeSector = null;
     if (paused || reduced.matches) {
       moveTo(Math.abs(distance(position, 0)) < Math.abs(distance(position, 210)) ? 0 : 210);
       return;
@@ -180,39 +201,31 @@
     const dy = event.clientY - headY;
     const dist = Math.hypot(dx, dy);
 
-    // GIẢM PHẠM VI TƯƠNG TÁC ĐỂ TẬP TRUNG GẦN NHÂN VẬT NHẤT:
-    // Bán kính cảm nhận tập trung xung quanh nhân vật (~520px)
+    // PHẠM VI TƯƠNG TÁC TẬP TRUNG GẦN NHÂN VẬT (~500px)
     const maxActiveRange = Math.min(window.innerWidth * 0.44, 520);
 
     if (dist > maxActiveRange) {
-      // Khi chuột di chuyển ra quá xa nhân vật, nhân vật quay lại tư thế làm việc
+      // Khi chuột ở quá xa nhân vật, từ từ quay lại gõ phím bên laptop
       clearTimeout(idleTimer);
-      idleTimer = setTimeout(idle, 1000);
+      idleTimer = setTimeout(idle, 950);
       return;
     }
 
     clearTimeout(idleTimer);
     idleTimer = setTimeout(idle, inactivityDelay);
 
-    // Khi con trỏ chuột ở sát khuôn mặt (< 55px), nhìn thẳng chính diện vào người dùng (pose 0)
-    if (dist < bounds.width * 0.09) {
-      gazeSector = null;
+    // Khi con trỏ chuột ở sát khuôn mặt (< 50px), nhìn thẳng chính diện vào người dùng (pose 0)
+    if (dist < bounds.width * 0.085) {
       moveTo(0);
       return;
     }
 
-    // Góc từ mắt nhân vật tới vị trí con chuột
+    // Góc thực tế từ mắt nhân vật tới vị trí con chuột
     const angle = (Math.atan2(dy, dx) + 2 * Math.PI) % (2 * Math.PI);
-    const sector = angle / (Math.PI / 4);
-    const nearest = Math.round(sector) % poses.length;
 
-    // Ngưỡng trễ nhạy hơn (0.22) để nhân vật phản ứng cực nhanh với từng chuyển động chuột nhỏ gần nhân vật
-    if (gazeSector !== null) {
-      const gap = Math.abs(sector - gazeSector);
-      if (Math.min(gap, poses.length - gap) < 0.22) return;
-    }
-    gazeSector = nearest;
-    moveTo(poses[gazeSector]);
+    // Ánh xạ liên tục 360 độ từ góc chuột sang frame mục tiêu mượt mà, không giật nấc
+    const nextTarget = getContinuousPose(angle);
+    moveTo(nextTarget);
   }
 
   function refresh() {
@@ -234,7 +247,6 @@
     }
   }
 
-  // Lắng nghe chuột trên window, nhưng phạm vi tương tác được lọc tập trung quanh nhân vật
   window.addEventListener('pointermove', event => {
     if (event.pointerType !== 'touch' || event.pointerId === touchId) follow(event);
   }, { passive: true });
@@ -273,11 +285,11 @@
     stage.classList.add('avatar-ready');
     refresh();
 
-    // Nạp sẵn toàn bộ các dải ảnh vào RAM ngay sau khi khởi tạo
+    // Nạp sẵn toàn bộ 15 dải ảnh vào RAM ngay sau khi khởi tạo
     if ('requestIdleCallback' in window) {
       requestIdleCallback(preloadAllStrips);
     } else {
-      setTimeout(preloadAllStrips, 80);
+      setTimeout(preloadAllStrips, 60);
     }
   });
 })();
