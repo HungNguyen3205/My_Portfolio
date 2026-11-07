@@ -39,30 +39,36 @@
   }
 
   /* ---------- Nạp & giải mã khung hình ---------- */
-  const blobs = new Array(FRAMES);    // dữ liệu nén (nhẹ), giữ toàn bộ
+  const images = new Array(FRAMES);   // ảnh nén đã tải (nhẹ), giữ toàn bộ
   const bitmaps = new Array(FRAMES);  // ảnh đã giải mã (nặng), giữ giới hạn
   const decoding = new Array(FRAMES);
   const MAX_DECODED = 110;
   let decodedCount = 0;
 
-  function fetchBlob(i) {
-    if (!blobs[i]) blobs[i] = fetch(src(i)).then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); });
-    return blobs[i];
+  // Nạp bằng thẻ <img>: chạy được cả khi mở file trực tiếp (file://), Live Server hay hosting thật.
+  function loadImage(i) {
+    if (!images[i]) images[i] = new Promise((resolve, reject) => {
+      const img = new Image();
+      img.decoding = 'async';
+      img.onload = () => resolve(img);
+      img.onerror = () => { images[i] = null; reject(new Error('frame ' + i)); };
+      img.src = src(i);
+    });
+    return images[i];
   }
 
-  function toBitmap(blob) {
-    if ('createImageBitmap' in window) return createImageBitmap(blob);
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img); img.onerror = reject;
-      img.src = URL.createObjectURL(blob);
-    });
+  async function toBitmap(img) {
+    try { await img.decode(); } catch (e) {}
+    if ('createImageBitmap' in window) {
+      try { return await createImageBitmap(img); } catch (e) {}
+    }
+    return img;
   }
 
   function decode(i) {
     i = wrap(Math.round(i));
     if (bitmaps[i] || decoding[i]) return decoding[i] || Promise.resolve(bitmaps[i]);
-    decoding[i] = fetchBlob(i).then(toBitmap).then(bmp => {
+    decoding[i] = loadImage(i).then(toBitmap).then(bmp => {
       bitmaps[i] = bmp; decoding[i] = null; decodedCount++;
       evict();
       if (Math.abs(shortest(wrap(pos), i)) < 2) { lastDrawn = NaN; if (ready && !raf) draw(pos); } // vẽ lại nếu đang chờ đúng khung này
@@ -82,7 +88,7 @@
     for (let k = 0; decodedCount > MAX_DECODED && k < scored.length; k++) {
       const i = scored[k][1];
       if (scored[k][0] < 12) break;
-      bitmaps[i].close?.(); bitmaps[i] = null; decodedCount--;
+      if (bitmaps[i].close) bitmaps[i].close(); bitmaps[i] = null; decodedCount--;
     }
   }
 
@@ -98,7 +104,7 @@
     const order = Array.from({ length: FRAMES }, (_, i) => i)
       .sort((a, b) => Math.abs(shortest(workPose, a)) - Math.abs(shortest(workPose, b)));
     let next = 0;
-    const worker = () => next < order.length ? fetchBlob(order[next++]).catch(() => {}).then(worker) : null;
+    const worker = () => next < order.length ? loadImage(order[next++]).catch(() => {}).then(worker) : null;
     for (let k = 0; k < 4; k++) worker();
   }
 
