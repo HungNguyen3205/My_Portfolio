@@ -13,7 +13,7 @@
   const { width, height } = canvas;
 
   // Tổng số khung hình quay vòng 360 độ từ source video
-  const frameCount = 211;
+  const frameCount = 239;
   const stripSize = 16;
   const stripCount = Math.ceil(frameCount / stripSize);
   const sheets = new Map();
