@@ -10,24 +10,12 @@
   const caption = document.getElementById('avatar-caption');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const hover = matchMedia('(any-hover: hover)');
-  const poses = {
-    center: '0% 0%',
-    left: '50% 0%',
-    right: '100% 0%',
-    up: '0% 100%',
-    down: '50% 100%',
-  };
   let paused = false;
   let selected = null;
 
   function showPose(x, y) {
-    const pose = y < 0 ? 'up' : y > 0 ? 'down'
-      : x < 0 ? 'left' : x > 0 ? 'right' : 'center';
-    character.style.backgroundPosition = poses[pose];
-    character.style.setProperty('--gaze-x', `${x * 9}px`);
-    character.style.setProperty('--gaze-y', `${y * 5}px`);
-    character.style.setProperty('--gaze-turn', `${x * (y ? 12 : 5)}deg`);
-    character.style.setProperty('--gaze-roll', `${x * (y ? 2 : 0)}deg`);
+    character.style.setProperty('--gaze-x', `${x * 6}px`);
+    character.style.setProperty('--gaze-y', `${y * 3.5}px`);
   }
 
   function refresh() {
@@ -57,12 +45,13 @@
       });
     }
 
+    const clamp = value => Math.max(-1, Math.min(1, value));
     stage.addEventListener('pointermove', event => {
       if (selected || paused || reduced.matches || event.pointerType === 'touch') return;
       const bounds = stage.getBoundingClientRect();
       const x = (event.clientX - bounds.left) / bounds.width - 0.5;
       const y = (event.clientY - bounds.top) / bounds.height - 0.5;
-      showPose(Math.abs(x) > 0.15 ? Math.sign(x) : 0, Math.abs(y) > 0.14 ? Math.sign(y) : 0);
+      showPose(clamp(x * 2.6), clamp(y * 2.6));
     }, { passive: true });
     stage.addEventListener('pointerleave', () => {
       if (!selected) showPose(0, 0);

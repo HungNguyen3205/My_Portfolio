@@ -66,10 +66,17 @@
 .avatar-character {
   display: none;
   background: url('assets/hung-states.webp') no-repeat 0 0 / 300% 200%;
-  transform-origin: center 80%;
-  transform: perspective(1100px) translate(var(--gaze-x, 0px), var(--gaze-y, 0px))
-    rotateY(var(--gaze-turn, 0deg)) rotateZ(var(--gaze-roll, 0deg));
-  transition: transform 200ms cubic-bezier(.2,.7,.25,1);
+}
+
+.avatar-character svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.avatar-iris {
+  transform: translate(var(--gaze-x, 0px), var(--gaze-y, 0px));
+  transition: transform 160ms cubic-bezier(.2,.65,.3,1);
 }
 
 .avatar-ready .avatar-character { display: block; }
@@ -151,5 +158,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .avatar-character { transition: none; }
+  .avatar-iris { transition: none; }
 }
