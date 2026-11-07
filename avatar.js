@@ -3,137 +3,81 @@
   if (!stage) return;
 
   const hero = stage.closest('.hero');
-  const canvas = stage.querySelector('canvas');
-  const context = canvas.getContext('2d', { alpha: false });
-  if (!context) return;
-
-  const button = document.getElementById('avatar-motion');
+  const character = stage.querySelector('.avatar-character');
+  const controls = hero.querySelector('.avatar-controls');
+  const directions = [...controls.querySelectorAll('[data-gaze]')];
+  const motion = document.getElementById('avatar-motion');
   const caption = document.getElementById('avatar-caption');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const hover = matchMedia('(any-hover: hover)');
-  const sheet = new Image();
-  const { width, height } = canvas;
-
-  // The source performs several gestures. Scrub only the outward turn
-  // on each side, reversing it as the pointer approaches the center.
-  const idle = 0;
-  const left = [idle, 1, 2, ...Array.from({ length: 11 }, (_, index) => 10 + index)];
-  const right = [idle, ...Array.from({ length: 16 }, (_, index) => 53 + index)];
-
-  let ready = false;
+  const poses = {
+    center: '0% 0%',
+    left: '50% 0%',
+    right: '100% 0%',
+    up: '0% 100%',
+    down: '50% 100%',
+  };
   let paused = false;
-  let visible = true;
-  let target = 0;
-  let position = 0;
-  let request = 0;
-  let previousTime = 0;
-  let lastFrame = -1;
-  let touchId = null;
+  let selected = null;
 
-  const canMove = () => ready && !paused && !reduced.matches && visible && !document.hidden;
-
-  function draw() {
-    const sequence = position < 0 ? left : right;
-    const index = Math.round(Math.abs(position) * (sequence.length - 1));
-    const frame = sequence[index];
-    if (frame === lastFrame) return;
-    context.drawImage(sheet, frame * width, 0, width, height, 0, 0, width, height);
-    lastFrame = frame;
-  }
-
-  function tick(time) {
-    request = 0;
-    if (!canMove()) return;
-
-    const elapsed = previousTime ? Math.min(time - previousTime, 50) : 1000 / 60;
-    previousTime = time;
-    const easing = 1 - Math.exp(-elapsed / 135);
-    const step = elapsed / 225;
-    const delta = (target - position) * easing;
-    position += Math.max(-step, Math.min(step, delta));
-
-    if (Math.abs(target - position) < 0.001) {
-      position = target;
-      previousTime = 0;
-      draw();
-      return;
-    }
-
-    draw();
-    request = requestAnimationFrame(tick);
-  }
-
-  function moveTo(value) {
-    target = value;
-    if (canMove() && !request) request = requestAnimationFrame(tick);
-  }
-
-  function follow(event) {
-    if (!canMove()) return;
-    const bounds = (event.pointerType === 'touch' ? canvas : hero).getBoundingClientRect();
-    const offset = (event.clientX - bounds.left) / bounds.width;
-    moveTo(Math.max(-1, Math.min(1, (offset - 0.5) / 0.44)));
+  function showPose(x, y) {
+    const pose = y < 0 ? 'up' : y > 0 ? 'down'
+      : x < 0 ? 'left' : x > 0 ? 'right' : 'center';
+    character.style.backgroundPosition = poses[pose];
+    character.style.setProperty('--gaze-x', `${x * 9}px`);
+    character.style.setProperty('--gaze-y', `${y * 5}px`);
+    character.style.setProperty('--gaze-turn', `${x * (y ? 12 : 5)}deg`);
+    character.style.setProperty('--gaze-roll', `${x * (y ? 2 : 0)}deg`);
   }
 
   function refresh() {
-    cancelAnimationFrame(request);
-    request = previousTime = 0;
-    position = target = 0;
-    touchId = null;
-    if (ready) draw();
-
     const stopped = paused || reduced.matches;
-    button.disabled = reduced.matches;
-    button.setAttribute('aria-pressed', String(stopped));
-    button.setAttribute('aria-label', stopped ? 'Bật chuyển động nhân vật' : 'Tạm dừng chuyển động nhân vật');
-    button.textContent = stopped ? '▶' : 'Ⅱ';
-    caption.textContent = reduced.matches ? 'Chuyển động đã giảm theo cài đặt thiết bị'
-      : paused ? 'Chuyển động đã tạm dừng'
-      : hover.matches ? 'Di chuyển chuột — Hùng sẽ nhìn theo bạn'
-      : 'Chạm hoặc kéo ngang để Hùng nhìn theo';
+    motion.hidden = reduced.matches || !hover.matches;
+    motion.setAttribute('aria-pressed', String(stopped));
+    motion.setAttribute('aria-label', stopped ? 'Bật chuyển động theo chuột' : 'Tạm dừng chuyển động theo chuột');
+    motion.textContent = stopped ? '▶' : 'Ⅱ';
+    caption.textContent = stopped || !hover.matches
+      ? 'Chọn hướng nhìn'
+      : 'Rê chuột hoặc chọn hướng nhìn';
+    if (!selected) showPose(0, 0);
   }
 
-  hero.addEventListener('pointermove', event => {
-    if (event.pointerType !== 'touch' || event.pointerId === touchId) follow(event);
-  }, { passive: true });
-  hero.addEventListener('pointerleave', () => moveTo(0));
-  canvas.addEventListener('pointerdown', event => {
-    if (event.pointerType !== 'touch' || !canMove()) return;
-    touchId = event.pointerId;
-    follow(event);
-  }, { passive: true });
-  function endTouch(event) {
-    if (event.pointerId !== touchId) return;
-    touchId = null;
-    moveTo(0);
-  }
-  window.addEventListener('pointerup', endTouch);
-  window.addEventListener('pointercancel', endTouch);
-  window.addEventListener('blur', () => moveTo(0));
-  button.addEventListener('click', () => {
-    paused = !paused;
-    refresh();
-  });
-  document.addEventListener('visibilitychange', refresh);
-  reduced.addEventListener('change', refresh);
-  hover.addEventListener('change', refresh);
+  const sprite = new Image();
+  sprite.src = 'assets/hung-states.webp';
+  sprite.decode().then(() => {
+    if (sprite.naturalWidth !== 1536 || sprite.naturalHeight !== 1024) return;
 
-  if ('IntersectionObserver' in window) {
-    new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting;
-      if (!visible) refresh();
-    }).observe(stage);
-  }
-
-  sheet.src = 'assets/hung-motion-bright.jpg';
-  sheet.decode().then(() => {
-    if (sheet.naturalWidth !== width * 119 || sheet.naturalHeight !== height) {
-      throw new Error('Unexpected sprite dimensions');
+    for (const button of directions) {
+      button.addEventListener('click', () => {
+        selected = selected === button ? null : button;
+        for (const direction of directions) {
+          direction.setAttribute('aria-pressed', String(direction === selected));
+        }
+        showPose(...(selected ? selected.dataset.gaze.split(',').map(Number) : [0, 0]));
+      });
     }
-    ready = true;
-    refresh();
+
+    stage.addEventListener('pointermove', event => {
+      if (selected || paused || reduced.matches || event.pointerType === 'touch') return;
+      const bounds = stage.getBoundingClientRect();
+      const x = (event.clientX - bounds.left) / bounds.width - 0.5;
+      const y = (event.clientY - bounds.top) / bounds.height - 0.5;
+      showPose(Math.abs(x) > 0.15 ? Math.sign(x) : 0, Math.abs(y) > 0.14 ? Math.sign(y) : 0);
+    }, { passive: true });
+    stage.addEventListener('pointerleave', () => {
+      if (!selected) showPose(0, 0);
+    });
+    motion.addEventListener('click', () => {
+      paused = !paused;
+      refresh();
+    });
+    reduced.addEventListener('change', refresh);
+    hover.addEventListener('change', refresh);
+
     stage.classList.add('avatar-ready');
+    controls.hidden = false;
+    refresh();
   }).catch(() => {
-    caption.textContent = 'Nguyễn Nam Hùng · Fullstack Developer';
+    // The approved portrait stays visible if the sprite cannot load.
   });
 })();
