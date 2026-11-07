@@ -17,7 +17,7 @@
 <a class="fallback-download" href="assets/hung-portfolio.glb" download>Tải model GLB trực tiếp</a>
 </main>
 <script type="module">
-import('./character-3d.bundle.js').catch(error => {
+import('./character-3d.bundle.js?v=shape-v2').catch(error => {
   document.querySelector('#status').textContent = 'Không tải được mô hình 3D. Đang hiển thị ảnh nhân vật.';
   console.error(error);
 });

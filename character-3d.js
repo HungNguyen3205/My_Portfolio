@@ -52,18 +52,56 @@ function mount() {
   head.name = 'Head pivot';
   head.position.set(0, 1.57, 0.16);
   model.add(head);
-  ball(head, skin, 0, 0.57, 0, 0.61, 0.71, 0.53);
-  ball(head, skin, 0, 0.29, 0.16, 0.46, 0.39, 0.38);
-  ball(head, skin, 0, 0.45, 0.51, 0.095, 0.105, 0.13);
-  ball(head, material(0xad5d56), 0, 0.23, 0.484, 0.15, 0.025, 0.036);
+  const face = sphere.clone();
+  const points = face.attributes.position;
+  for (let i = 0; i < points.count; i++) {
+    const y = points.getY(i);
+    const jaw = THREE.MathUtils.smoothstep(y, -0.95, -0.05);
+    points.setXYZ(i, points.getX(i) * (0.72 + 0.28 * jaw), y, points.getZ(i));
+  }
+  face.computeVertexNormals();
+  part(head, face, skin, 0, 0.57, 0, 0.58, 0.73, 0.53);
+  ball(head, skin, 0, 0.45, 0.507, 0.066, 0.105, 0.066);
+  ball(head, skin, 0, 0.414, 0.543, 0.078, 0.041, 0.043);
 
-  ball(head, hair, 0, 0.96, -0.05, 0.65, 0.44, 0.56);
-  for (let i = 0; i < 13; i++) {
-    const t = i / 12;
-    const lock = ball(head, i % 3 ? hair : hairLight,
-      (t - 0.5) * 1.13, 0.93 + Math.sin(t * Math.PI) * 0.24,
-      0.29 + Math.sin(t * Math.PI) * 0.15, 0.19, 0.29, 0.18);
-    lock.rotation.z = 0.46 - t * 1.25;
+  function strand(parent, surface, coordinates, radius, segments = 18) {
+    const path = new THREE.CatmullRomCurve3(coordinates.map(point => new THREE.Vector3(...point)));
+    const tube = new THREE.TubeGeometry(path, segments, radius, 8);
+    const positions = tube.attributes.position;
+    for (let ring = 0; ring <= segments; ring++) {
+      const t = ring / segments;
+      const center = path.getPointAt(t);
+      const taper = 0.12 + 0.88 * Math.sin(Math.PI * t) ** 0.45;
+      for (let vertex = 0; vertex < 9; vertex++) {
+        const i = ring * 9 + vertex;
+        positions.setXYZ(i, center.x + (positions.getX(i) - center.x) * taper,
+          center.y + (positions.getY(i) - center.y) * taper,
+          center.z + (positions.getZ(i) - center.z) * taper);
+      }
+    }
+    tube.computeVertexNormals();
+    parent.add(new THREE.Mesh(tube, surface));
+  }
+
+  strand(head, material(0x984c43), [[-.145,.252,.452],[-.065,.229,.474],[0,.223,.481],[.065,.229,.474],[.145,.252,.452]], .013);
+
+  ball(head, hair, 0, 1.02, -0.04, 0.61, 0.38, 0.54);
+  for (const side of [-1, 1]) {
+    for (let row = 0; row < 5; row++) {
+      for (let lock = 0; lock < 5; lock++) {
+        const lift = row * 0.052 + lock * 0.024;
+        const z = 0.49 - row * 0.12;
+        const spread = lock * 0.035;
+        strand(head, (row + lock) % 4 === 0 ? hairLight : hair, [
+          [side * (.018 + spread), 1.08 + lift, z],
+          [side * (.15 + spread), 1.24 + lift, z + .045],
+          [side * (.32 + spread), 1.20 + lift, z + .028],
+          [side * (.49 + spread * .65), 1.04 + lift, z - .025],
+          [side * (.56 + spread * .45), .84 + lift, z - .095],
+        ], .051 - lock * .004);
+      }
+    }
+    strand(head, hair, [[side*.045,1.15,.49],[side*.091,1.04,.536],[side*.083,.94,.548],[side*.103,.84,.51]], .017);
   }
 
   const eyes = [];
@@ -75,12 +113,12 @@ function mount() {
     eye.name = side < 0 ? 'Eye screen left' : 'Eye screen right';
     eye.position.set(side * 0.224, 0.567, 0.469);
     head.add(eye);
-    ball(eye, white, 0, 0, 0, 0.151, 0.088, 0.071);
+    ball(eye, white, 0, 0, 0, 0.135, 0.060, 0.040);
     const pupil = new THREE.Group();
     eye.add(pupil);
-    ball(pupil, iris, 0, 0, 0.066, 0.061, 0.065, 0.026);
-    ball(pupil, black, 0, 0, 0.086, 0.032, 0.036, 0.012);
-    ball(pupil, white, -0.019, 0.024, 0.096, 0.012, 0.013, 0.006);
+    ball(pupil, iris, 0, 0, 0.038, 0.052, 0.054, 0.016);
+    ball(pupil, black, 0, 0, 0.05, 0.028, 0.031, 0.01);
+    ball(pupil, white, -0.019, 0.024, 0.058, 0.01, 0.011, 0.005);
     eyes.push({ eye, pupil });
   }
 
@@ -91,10 +129,14 @@ function mount() {
     model.add(arm);
     const sleeve = ball(arm, shirt, side * 0.065, 0.15, -0.035, 0.27, 0.34, 0.28);
     sleeve.rotation.z = side * 0.35;
-    const hand = ball(arm, skin, -side * 0.13, -0.16, 0.37, 0.36, 0.13, 0.16);
+    const hand = ball(arm, skin, -side * 0.13, -0.16, 0.25, 0.36, 0.13, 0.13);
     hand.rotation.y = side * 0.45;
     return arm;
   });
+  for (const side of [-1, 1]) {
+    const collar = block(model, shirt, side * .19, 1.38, .40, .28, .18, .045);
+    collar.rotation.z = side * .42;
+  }
   block(model, metal, 0, 0.45, 0.91, 1.42, 0.76, 0.065).rotation.x = -0.12;
   block(model, shirt, 0, 0.10, 0.56, 1.43, 0.06, 0.76);
   block(model, shirt, 0, 0.45, 0.951, 0.16, 0.13, 0.012);
@@ -167,3 +209,4 @@ try {
   status.textContent = 'Không thể mở bản mẫu 3D trên trình duyệt này.';
   console.error(error);
 }
+
