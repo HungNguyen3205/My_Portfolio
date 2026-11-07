@@ -1,231 +1,224 @@
+/* Nhân vật nhìn theo chuột — bản mượt.
+   - 239 khung hình nền trong suốt, mỗi khung một file nhỏ (assets/hero-frames/NNN.webp)
+     → giải mã ngoài luồng chính bằng createImageBitmap, không còn ảnh 14.080px vượt giới hạn GPU.
+   - Chuyển động dùng lò xo giảm chấn tới hạn trên trục "không cuộn vòng": không giật, không quay ngược.
+   - Hướng quay được chốt khi mục tiêu đổi, có quán tính → hết hiện tượng giằng co qua lại.
+   - Khung chưa giải mã xong thì vẽ khung gần nhất thay vì đứng chờ → không bao giờ khựng. */
 (() => {
   const stage = document.getElementById('avatar-stage');
   if (!stage) return;
 
   const hero = stage.closest('.hero');
   const canvas = stage.querySelector('canvas');
-  const context = canvas.getContext('2d', { alpha: false });
-  if (!context) return;
+  const ctx = canvas.getContext('2d', { alpha: true });
+  if (!ctx) return;
 
   const button = document.getElementById('avatar-motion');
   const caption = document.getElementById('avatar-caption');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const { width, height } = canvas;
 
-  // Sử dụng toàn bộ 239 khung hình (15 strip) từ source video
-  const frameCount = 239;
-  const stripSize = 16;
-  const stripCount = Math.ceil(frameCount / stripSize);
-  const sheets = new Map();
+  const FRAMES = 239;
+  const src = i => `assets/hero-frames/${String(i).padStart(3, '0')}.webp`;
 
-  // 8 điểm neo hướng nhìn theo chiều kim đồng hồ bắt đầu từ 0° (bên phải):
-  // 0° (phải): 145, 45° (dưới-phải): 176, 90° (dưới): 193,
-  // 135° (dưới-trái): 19, 180° (trái): 43, 225° (trên-trái): 60,
-  // 270° (trên): 79, 315° (trên-phải): 105.
+  // 8 điểm neo hướng nhìn theo chiều kim đồng hồ, bắt đầu từ 0° (bên phải).
   const poses = [145, 176, 193, 19, 43, 60, 79, 105];
+  const workPose = 200;          // cúi nhìn laptop
+  const inactivityDelay = 3500;  // giữ ánh nhìn khi chuột dừng
 
-  // Tính toán khung hình mục tiêu liên tục theo góc chuột (Continuous Analog Rotation)
-  // Không bị giật theo 8 góc cứng mà xoay mượt mà 360 độ theo mọi phân độ góc của chuột
-  function getContinuousPose(angle) {
+  const wrap = f => ((f % FRAMES) + FRAMES) % FRAMES;
+  const shortest = (from, to) => wrap(to - from + FRAMES / 2) - FRAMES / 2;
+
+  function poseForAngle(angle) {
     const norm = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
     const sector = norm / (Math.PI / 4);
-    const i = Math.floor(sector);
-    const frac = sector - i;
-    const p0 = poses[i % 8];
-    const p1 = poses[(i + 1) % 8];
-    const delta = (i === 2) ? ((frameCount - p0) + p1) : (p1 - p0);
-    return ((p0 + delta * frac) % frameCount + frameCount) % frameCount;
+    const i = Math.floor(sector), frac = sector - i;
+    const p0 = poses[i % 8], p1 = poses[(i + 1) % 8];
+    const delta = i === 2 ? (FRAMES - p0) + p1 : p1 - p0;
+    return wrap(p0 + delta * frac);
   }
 
-  // Tư thế nhìn xuống laptop làm việc
-  const workPose = 200;
-  // Thời gian giữ ánh nhìn khi chuột dừng di chuyển trong vùng tương tác
-  const inactivityDelay = 3500;
+  /* ---------- Nạp & giải mã khung hình ---------- */
+  const blobs = new Array(FRAMES);    // dữ liệu nén (nhẹ), giữ toàn bộ
+  const bitmaps = new Array(FRAMES);  // ảnh đã giải mã (nặng), giữ giới hạn
+  const decoding = new Array(FRAMES);
+  const MAX_DECODED = 110;
+  let decodedCount = 0;
 
-  let idleTimer;
-  let position = 0;
-  let target = 0;
-  let previousTime = 0;
-  let velocity = 0;
-  let request = 0;
-  let lastDrawnPos = -1;
-  let paused = false;
-  let ready = false;
-  let touchId = null;
-
-  const wrap = frame => ((frame % frameCount) + frameCount) % frameCount;
-  const distance = (from, to) => wrap(to - from + frameCount / 2) - frameCount / 2;
-
-  function turnDistance(from, to) {
-    // Khi đổi giữa nhìn ngang trái (35–55) và ngang phải (135–160), đi qua phía trước mặt
-    const isHorizLeft = f => f >= 35 && f <= 55;
-    const isHorizRight = f => f >= 135 && f <= 160;
-    if (isHorizLeft(from) && isHorizRight(to)) return -wrap(from - to);
-    if (isHorizRight(from) && isHorizLeft(to)) return wrap(to - from);
-    return distance(from, to);
+  function fetchBlob(i) {
+    if (!blobs[i]) blobs[i] = fetch(src(i)).then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); });
+    return blobs[i];
   }
 
-  const stripFor = frame => Math.floor(frame / stripSize);
-
-  function getStrip(index) {
-    if (sheets.has(index)) return sheets.get(index);
-    const sheet = { bitmap: null };
-    const image = new Image();
-    image.src = `assets/hero-motion/${String(index).padStart(2, '0')}.webp`;
-    sheet.loaded = image.decode().then(() => {
-      sheet.bitmap = image;
-    }).catch(() => {
-      sheet.failed = true;
+  function toBitmap(blob) {
+    if ('createImageBitmap' in window) return createImageBitmap(blob);
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img); img.onerror = reject;
+      img.src = URL.createObjectURL(blob);
     });
-    sheets.set(index, sheet);
-    return sheet;
   }
 
-  // Nạp trước toàn bộ các dải ảnh vào RAM để đảm bảo 0% drop frame
-  function preloadAllStrips() {
-    for (let i = 0; i <= stripCount; i++) {
-      getStrip(i);
+  function decode(i) {
+    i = wrap(Math.round(i));
+    if (bitmaps[i] || decoding[i]) return decoding[i] || Promise.resolve(bitmaps[i]);
+    decoding[i] = fetchBlob(i).then(toBitmap).then(bmp => {
+      bitmaps[i] = bmp; decoding[i] = null; decodedCount++;
+      evict();
+      if (Math.abs(shortest(wrap(pos), i)) < 2) { lastDrawn = NaN; if (ready && !raf) draw(pos); } // vẽ lại nếu đang chờ đúng khung này
+      return bmp;
+    }).catch(() => { decoding[i] = null; });
+    return decoding[i];
+  }
+
+  function evict() {
+    if (decodedCount <= MAX_DECODED) return;
+    const here = wrap(pos), goal = wrap(targetU);
+    const scored = [];
+    for (let i = 0; i < FRAMES; i++) if (bitmaps[i]) {
+      scored.push([Math.min(Math.abs(shortest(here, i)), Math.abs(shortest(goal, i))), i]);
+    }
+    scored.sort((a, b) => b[0] - a[0]);
+    for (let k = 0; decodedCount > MAX_DECODED && k < scored.length; k++) {
+      const i = scored[k][1];
+      if (scored[k][0] < 12) break;
+      bitmaps[i].close?.(); bitmaps[i] = null; decodedCount--;
     }
   }
 
-  // Nội suy khung hình phụ (Sub-frame Interpolation)
-  // Tự động sinh thêm hàng loạt khung hình trung gian ảo mượt mà giữa các frame gốc
-  function drawContinuous(pos) {
-    if (pos === lastDrawnPos) return true;
-    const f = wrap(pos);
-    const f0 = Math.floor(f);
-    const f1 = (f0 + 1) % frameCount;
-    const frac = f - f0;
-
-    const sheet0 = getStrip(stripFor(f0));
-    if (!sheet0.bitmap) return false;
-
-    // Khi dừng hoặc ở cực gần frame gốc: vẽ nét căng 100%
-    if (frac < 0.02) {
-      context.globalAlpha = 1.0;
-      context.drawImage(sheet0.bitmap, (f0 % stripSize) * width, 0, width, height, 0, 0, width, height);
-      lastDrawnPos = pos;
-      return true;
-    }
-
-    if (frac > 0.98) {
-      const sheet1 = getStrip(stripFor(f1));
-      if (!sheet1.bitmap) return false;
-      context.globalAlpha = 1.0;
-      context.drawImage(sheet1.bitmap, (f1 % stripSize) * width, 0, width, height, 0, 0, width, height);
-      lastDrawnPos = pos;
-      return true;
-    }
-
-    const sheet1 = getStrip(stripFor(f1));
-    if (!sheet1.bitmap) {
-      context.globalAlpha = 1.0;
-      context.drawImage(sheet0.bitmap, (f0 % stripSize) * width, 0, width, height, 0, 0, width, height);
-      lastDrawnPos = pos;
-      return true;
-    }
-
-    // Hòa trộn 2 khung hình kề nhau theo tỷ lệ phần trăm chính xác (60fps/120fps motion smoothing)
-    context.globalAlpha = 1.0;
-    context.drawImage(sheet0.bitmap, (f0 % stripSize) * width, 0, width, height, 0, 0, width, height);
-    context.globalAlpha = frac;
-    context.drawImage(sheet1.bitmap, (f1 % stripSize) * width, 0, width, height, 0, 0, width, height);
-    context.globalAlpha = 1.0;
-    lastDrawnPos = pos;
-    return true;
+  // Giải mã trước các khung trên đường đi từ vị trí hiện tại tới mục tiêu.
+  function prefetchPath(fromU, toU) {
+    const dir = Math.sign(toU - fromU) || 1;
+    const steps = Math.min(Math.abs(toU - fromU) + 8, 130);
+    for (let s = -3; s <= steps; s += 1) decode(fromU + dir * s);
   }
 
-  function tick(time) {
-    request = 0;
-    const elapsed = previousTime ? Math.min(time - previousTime, 40) : 16.7;
-    previousTime = time;
-    const delta = turnDistance(position, target);
+  // Tải nền toàn bộ dữ liệu nén, ưu tiên khung gần tư thế làm việc.
+  function backgroundLoad() {
+    const order = Array.from({ length: FRAMES }, (_, i) => i)
+      .sort((a, b) => Math.abs(shortest(workPose, a)) - Math.abs(shortest(workPose, b)));
+    let next = 0;
+    const worker = () => next < order.length ? fetchBlob(order[next++]).catch(() => {}).then(worker) : null;
+    for (let k = 0; k < 4; k++) worker();
+  }
 
-    // ĐIỀU TIẾT VẬN TỐC TỰ NHIÊN:
-    // Tốc độ cao nhưng giảm tốc cực êm dịu khi tới đích (không dừng đột ngột)
-    const desiredVelocity = Math.max(-0.13, Math.min(0.13, delta / 48));
-    const nextVelocity = velocity + (desiredVelocity - velocity) * (1 - Math.exp(-elapsed / 34));
-
-    // Bước dịch chuyển mượt mà
-    const step = Math.max(-2.2, Math.min(2.2, nextVelocity * elapsed));
-
-    // Đáp đích êm ái: chỉ dừng hẳn khi khoảng cách cực nhỏ và vận tốc đã triệt tiêu
-    if (Math.abs(delta) < 0.05 && Math.abs(nextVelocity) < 0.008) {
-      position = target;
-      velocity = 0;
-      previousTime = 0;
-      drawContinuous(target);
-      return;
+  /* ---------- Vẽ ---------- */
+  function nearestDecoded(i, dir) {
+    for (let d = 0; d <= 10; d++) {
+      const a = bitmaps[wrap(i - dir * d)]; if (a) return a;   // ưu tiên khung đã đi qua
+      const b = bitmaps[wrap(i + dir * d)]; if (b) return b;
     }
+    return null;
+  }
 
-    const next = wrap(position + step);
-    if (drawContinuous(next)) {
-      position = next;
-      velocity = nextVelocity;
-    }
-
-    if (Math.abs(turnDistance(position, target)) >= 0.05 || Math.abs(velocity) >= 0.008) {
-      request = requestAnimationFrame(tick);
+  let lastDrawn = NaN;
+  function draw(p, dir = 1) {
+    if (Math.abs(p - lastDrawn) < 0.004) return;
+    const f = wrap(p), f0 = Math.floor(f), f1 = wrap(f0 + 1), t = f - f0;
+    const a = bitmaps[f0], b = bitmaps[f1];
+    ctx.clearRect(0, 0, width, height);
+    if (a && b && t > 0.015 && t < 0.985) {
+      // Hòa trộn tuyến tính chính xác hai khung kề nhau (không bóng mờ viền).
+      ctx.globalAlpha = 1 - t;
+      ctx.drawImage(a, 0, 0, width, height);
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = t;
+      ctx.drawImage(b, 0, 0, width, height);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
     } else {
-      position = target;
-      velocity = 0;
-      previousTime = 0;
-      drawContinuous(target);
+      const img = (t < 0.5 ? a : b) || a || b || nearestDecoded(Math.round(f), dir);
+      if (!img) { lastDrawn = NaN; return; }
+      ctx.drawImage(img, 0, 0, width, height);
     }
+    lastDrawn = p;
+  }
+
+  /* ---------- Chuyển động: lò xo giảm chấn tới hạn ---------- */
+  let pos = 0;        // vị trí không cuộn vòng (đơn vị: khung hình)
+  let vel = 0;        // khung/giây
+  let targetU = 0;    // mục tiêu không cuộn vòng
+  let targetFrame = 0;
+  let raf = 0, lastT = 0;
+  let ready = false, paused = false, touchId = null, idleTimer;
+
+  const OMEGA = 10;        // độ "nhanh nhạy" của lò xo
+  const MAX_SPEED = 190;   // khung/giây
+
+  function tick(now) {
+    raf = 0;
+    let dt = lastT ? (now - lastT) / 1000 : 1 / 60;
+    lastT = now;
+    dt = Math.min(dt, 1 / 20);
+    // Chia nhỏ bước để ổn định cả khi tab bị chậm.
+    const n = Math.ceil(dt / (1 / 120));
+    const h = dt / n;
+    for (let k = 0; k < n; k++) {
+      const err = targetU - pos;
+      const acc = OMEGA * OMEGA * err - 2 * OMEGA * vel;
+      vel = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, vel + acc * h));
+      pos += vel * h;
+    }
+    const done = Math.abs(targetU - pos) < 0.02 && Math.abs(vel) < 0.3;
+    if (done) { pos = targetU; vel = 0; }
+    draw(pos, Math.sign(vel) || 1);
+    if (!done) raf = requestAnimationFrame(tick);
+    else { lastT = 0; pos = targetU = wrap(pos); lastDrawn = pos; }
   }
 
   function moveTo(frame) {
-    if (target === frame && Math.abs(turnDistance(position, frame)) < 0.05) return;
-    target = frame;
-    if (ready && !request) request = requestAnimationFrame(tick);
+    frame = wrap(frame);
+    const here = wrap(pos);
+    let d = shortest(here, frame);
+
+    // Đổi giữa nhìn trái ↔ phải: luôn đi qua phía trước mặt.
+    const left = f => f >= 35 && f <= 55, right = f => f >= 135 && f <= 160;
+    if (left(here) && right(frame)) d = -wrap(here - frame);
+    else if (right(here) && left(frame)) d = wrap(frame - here);
+    // Đang quay một chiều mà mục tiêu nằm gần điểm đối xứng: giữ chiều cũ (quán tính).
+    else if (Math.abs(vel) > 15 && Math.sign(d) !== Math.sign(vel) && Math.abs(d) > FRAMES / 2 - 40) {
+      d = d - Math.sign(d) * FRAMES;
+    }
+
+    const nextU = pos + d;
+    if (Math.abs(nextU - targetU) < 0.01 && frame === targetFrame) return;
+    targetFrame = frame;
+    targetU = nextU;
+    prefetchPath(pos, targetU);
+    if (ready && !raf) { lastT = 0; raf = requestAnimationFrame(tick); }
   }
 
+  /* ---------- Tương tác ---------- */
   function idle() {
     clearTimeout(idleTimer);
     if (paused || reduced.matches) {
-      moveTo(Math.abs(distance(position, 0)) < Math.abs(distance(position, 210)) ? 0 : 210);
+      moveTo(Math.abs(shortest(wrap(pos), 0)) < Math.abs(shortest(wrap(pos), 210)) ? 0 : 210);
       return;
     }
     moveTo(workPose);
   }
 
-  function follow(event) {
-    if (!ready || paused || reduced.matches) return;
+  // Gom sự kiện chuột vào một lần mỗi khung hình.
+  let pendingPointer = null, pointerRaf = 0;
+  function queueFollow(e) {
+    pendingPointer = { x: e.clientX, y: e.clientY };
+    if (!pointerRaf) pointerRaf = requestAnimationFrame(() => { pointerRaf = 0; follow(pendingPointer); });
+  }
 
-    const bounds = canvas.getBoundingClientRect();
-    // Tọa độ mắt nhân vật trên màn hình (~38% từ đỉnh canvas)
-    const headX = bounds.left + bounds.width * 0.5;
-    const headY = bounds.top + bounds.height * 0.38;
-
-    const dx = event.clientX - headX;
-    const dy = event.clientY - headY;
+  function follow(p) {
+    if (!ready || paused || reduced.matches || !p) return;
+    const r = canvas.getBoundingClientRect();
+    const dx = p.x - (r.left + r.width * 0.5);
+    const dy = p.y - (r.top + r.height * 0.38);
     const dist = Math.hypot(dx, dy);
+    const range = Math.min(innerWidth * 0.44, 560);
 
-    // PHẠM VI TƯƠNG TÁC TẬP TRUNG GẦN NHÂN VẬT (~500px)
-    const maxActiveRange = Math.min(window.innerWidth * 0.44, 520);
-
-    if (dist > maxActiveRange) {
-      // Khi chuột ở quá xa nhân vật, từ từ quay lại gõ phím bên laptop
-      clearTimeout(idleTimer);
-      idleTimer = setTimeout(idle, 950);
-      return;
-    }
-
+    if (dist > range) { clearTimeout(idleTimer); idleTimer = setTimeout(idle, 950); return; }
     clearTimeout(idleTimer);
     idleTimer = setTimeout(idle, inactivityDelay);
 
-    // Khi con trỏ chuột ở sát khuôn mặt (< 50px), nhìn thẳng chính diện vào người dùng (pose 0)
-    if (dist < bounds.width * 0.085) {
-      moveTo(0);
-      return;
-    }
-
-    // Góc thực tế từ mắt nhân vật tới vị trí con chuột
-    const angle = (Math.atan2(dy, dx) + 2 * Math.PI) % (2 * Math.PI);
-
-    // Ánh xạ liên tục 360 độ từ góc chuột sang frame mục tiêu mượt mà, không giật nấc
-    const nextTarget = getContinuousPose(angle);
-    moveTo(nextTarget);
+    if (dist < r.width * 0.085) { moveTo(0); return; }
+    moveTo(poseForAngle(Math.atan2(dy, dx)));
   }
 
   function refresh() {
@@ -237,59 +230,55 @@
     button.textContent = stopped ? '▶' : 'Ⅱ';
     caption.textContent = stopped ? 'Chuyển động đã tạm dừng' : 'Rê chuột gần Hùng để nhìn theo';
     if (reduced.matches) {
-      cancelAnimationFrame(request);
-      request = previousTime = velocity = 0;
-      getStrip(0).loaded.then(() => {
-        if (reduced.matches && drawContinuous(0)) position = target = 0;
-      });
-    } else {
-      idle();
-    }
+      cancelAnimationFrame(raf); raf = 0; vel = 0;
+      pos = targetU = 0; lastDrawn = NaN; draw(0);
+    } else idle();
   }
 
-  window.addEventListener('pointermove', event => {
-    if (event.pointerType !== 'touch' || event.pointerId === touchId) follow(event);
+  addEventListener('pointermove', e => {
+    if (e.pointerType !== 'touch' || e.pointerId === touchId) queueFollow(e);
   }, { passive: true });
+  document.addEventListener('mouseleave', () => { if (!reduced.matches) idle(); });
+  addEventListener('blur', () => { if (!reduced.matches) idle(); });
 
-  document.addEventListener('mouseleave', () => {
-    if (!reduced.matches) idle();
-  });
-  window.addEventListener('blur', () => {
-    if (!reduced.matches) idle();
-  });
-
-  // Hỗ trợ cảm ứng
-  canvas.addEventListener('pointerdown', event => {
-    if (event.pointerType !== 'touch') return;
-    touchId = event.pointerId;
-    follow(event);
+  canvas.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'touch') return;
+    touchId = e.pointerId; queueFollow(e);
   }, { passive: true });
+  const endTouch = e => { if (e.pointerId !== touchId) return; touchId = null; if (!reduced.matches) idle(); };
+  addEventListener('pointerup', endTouch);
+  addEventListener('pointercancel', endTouch);
 
-  function endTouch(event) {
-    if (event.pointerId !== touchId) return;
-    touchId = null;
-    if (!reduced.matches) idle();
-  }
-  window.addEventListener('pointerup', endTouch);
-  window.addEventListener('pointercancel', endTouch);
-
-  button.addEventListener('click', () => {
-    paused = !paused;
-    refresh();
-  });
+  button.addEventListener('click', () => { paused = !paused; refresh(); });
   reduced.addEventListener('change', refresh);
 
-  getStrip(0).loaded.then(() => {
-    if (!drawContinuous(0)) return;
+  /* ---------- Chữ PORTFOLIO trôi nhẹ ngược hướng chuột (chiều sâu) ---------- */
+  if (hero && matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    let mx = 0, my = 0, cx = 0, cy = 0, pRaf = 0;
+    const loop = () => {
+      cx += (mx - cx) * 0.08; cy += (my - cy) * 0.08;
+      hero.style.setProperty('--wm-x', (cx * -18).toFixed(2) + 'px');
+      hero.style.setProperty('--wm-y', (cy * -10).toFixed(2) + 'px');
+      hero.style.setProperty('--au-x', (cx * 30).toFixed(2) + 'px');
+      pRaf = Math.abs(mx - cx) + Math.abs(my - cy) > 0.001 ? requestAnimationFrame(loop) : 0;
+    };
+    hero.addEventListener('pointermove', e => {
+      if (reduced.matches) return;
+      const r = hero.getBoundingClientRect();
+      mx = (e.clientX - r.left) / r.width - 0.5;
+      my = (e.clientY - r.top) / r.height - 0.5;
+      if (!pRaf) pRaf = requestAnimationFrame(loop);
+    }, { passive: true });
+  }
+
+  /* ---------- Khởi động ---------- */
+  Promise.all([decode(0), decode(workPose), decode(1), decode(workPose - 1)]).then(() => {
+    if (!bitmaps[0]) return;           // không tải được → giữ ảnh tĩnh dự phòng
+    draw(0);
     ready = true;
     stage.classList.add('avatar-ready');
     refresh();
-
-    // Nạp sẵn toàn bộ 15 dải ảnh vào RAM ngay sau khi khởi tạo
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(preloadAllStrips);
-    } else {
-      setTimeout(preloadAllStrips, 60);
-    }
+    const start = () => backgroundLoad();
+    'requestIdleCallback' in window ? requestIdleCallback(start, { timeout: 1500 }) : setTimeout(start, 300);
   });
 })();

@@ -3,12 +3,16 @@
   const splash = document.getElementById('intro-splash');
   const videoWrap = document.getElementById('intro-video-wrap');
   const video = document.getElementById('portfolio-intro-video');
-  const startBtn = document.getElementById('splash-start');
-  const skipDirectBtn = document.getElementById('splash-skip');
+  const choiceNo = document.getElementById('game-choice-no');
+  const choiceYes = document.getElementById('game-choice-yes');
+  const runnerChar = document.getElementById('runner-character');
+  const runnerSpeech = document.getElementById('runner-speech');
+  const speechFill = document.getElementById('speech-fill');
+  const speechSkip = document.getElementById('speech-skip');
   const skipBtn = document.getElementById('intro-skip-btn');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 
-  if (!dialog || typeof dialog.showModal !== 'function' || reduced.matches || location.hash) return;
+  if (!dialog || typeof dialog.showModal !== 'function' || location.hash) return;
 
   const sessionKey = 'portfolio-intro-seen';
   try {
@@ -20,7 +24,34 @@
   let finished = false;
   let timeout;
 
-  // Phát âm thanh intro êm dịu chuẩn âm học qua Web Audio API khi người dùng click Splash
+  // Âm thanh vui tươi, hóm hỉnh 8-bit khi bấm "Chưa"
+  function playPlayfulSound() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+      // Dãy nốt luyến vui vẻ: F4 -> A4 -> C5 -> E5 -> G5
+      const notes = [349.23, 440.00, 523.25, 659.25, 783.99];
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + i * 0.07);
+
+        gain.gain.setValueAtTime(0.0001, now + i * 0.07);
+        gain.gain.exponentialRampToValueAtTime(0.08, now + i * 0.07 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.07 + 0.16);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + i * 0.07);
+        osc.stop(now + i * 0.07 + 0.18);
+      });
+    } catch {}
+  }
+
+  // Âm thanh cinematic chào đón khi bấm "Rồi!"
   function playCinematicChime() {
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -63,8 +94,27 @@
     }
   }
 
-  // Khởi động phát video khi người dùng click Splash (User Gesture cho phép phát âm thanh 100%)
-  function startExperience() {
+  // Khi chọn "Chưa": Hiện câu thoại trêu đùa và tự động vào portfolio
+  function onChooseNo() {
+    playPlayfulSound();
+
+    if (runnerChar) runnerChar.classList.add('is-happy');
+    const dialogue = document.getElementById('game-dialogue');
+    const response = document.getElementById('game-response');
+    if (dialogue) dialogue.hidden = true;
+    if (response) {
+      response.hidden = false;
+      setTimeout(() => {
+        if (speechFill) speechFill.style.width = '100%';
+      }, 30);
+    }
+
+    // Sau 1.8s tự động vào trang chính
+    timeout = setTimeout(() => finish(true), 1800);
+  }
+
+  // Khi chọn "Rồi!": Bắt đầu phát video VỚI ĐẦY ĐỦ ÂM THANH
+  function onChooseYes() {
     playCinematicChime();
 
     if (splash) splash.classList.add('is-hidden');
@@ -72,7 +122,7 @@
       if (splash) splash.hidden = true;
       if (videoWrap) videoWrap.hidden = false;
 
-      // Vì đây là hành động click trực tiếp của người dùng, trình duyệt cho phép bật âm thanh!
+      // Vì là thao tác click trực tiếp từ người dùng, trình duyệt cho phép bật âm thanh 100%!
       video.muted = false;
       video.volume = 1.0;
       video.src = 'assets/portfolio-intro.mp4';
@@ -98,8 +148,9 @@
     finish();
   });
 
-  if (startBtn) startBtn.addEventListener('click', startExperience);
-  if (skipDirectBtn) skipDirectBtn.addEventListener('click', () => finish(true));
+  if (choiceNo) choiceNo.addEventListener('click', onChooseNo);
+  if (choiceYes) choiceYes.addEventListener('click', onChooseYes);
+  if (speechSkip) speechSkip.addEventListener('click', () => finish(true));
   if (skipBtn) skipBtn.addEventListener('click', () => finish(true));
 
   reduced.addEventListener('change', () => { if (reduced.matches) finish(false); });

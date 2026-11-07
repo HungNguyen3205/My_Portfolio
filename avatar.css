@@ -42,3 +42,32 @@
   .hero-centered .avatar-stage .avatar-fallback { width: min(450px, 90vw); }
 }
 .avatar-motion-canvas { touch-action: pan-y; }
+
+/* ===== Wordmark v2: chữ PORTFOLIO liền một khối, nằm SAU nhân vật (khung hình đã có nền trong suốt) ===== */
+.hero-centered .hero-wordmark{left:0;right:0;justify-content:center;gap:0;font-size:clamp(86px,18.6vw,300px);letter-spacing:-.035em;line-height:.9;z-index:1;transform:translate3d(var(--wm-x,0px),var(--wm-y,0px),0);will-change:transform}
+.hero-centered .hero-wordmark>span,.hero-centered .hero-wordmark .wordmark-left,.hero-centered .hero-wordmark .wordmark-right{width:auto;text-align:center;color:transparent;background:linear-gradient(180deg,#ffffff 0%,#fffaf1 38%,#f8e2bb 70%,#e9bf80 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:2.6px rgba(214,166,98,.95);text-shadow:none;filter:drop-shadow(0 0 10px rgba(255,220,168,.9)) drop-shadow(0 0 34px rgba(255,200,130,.45)) drop-shadow(0 0 70px rgba(110,215,255,.35));transform:scaleX(.92) scaleY(1.34);transform-origin:center}
+.hero-centered .hero-wordmark .wordmark-left{margin-right:-.02em}
+/* Quầng sáng mềm sau lưng nhân vật để tách khỏi chữ */
+.hero-centered .avatar-stage:before{content:'';position:absolute;left:50%;top:50%;width:min(620px,58vw);aspect-ratio:1.15;transform:translate(-50%,-48%);background:radial-gradient(closest-side,rgba(255,255,255,.92),rgba(255,255,255,.55) 55%,transparent);pointer-events:none;z-index:0}
+.hero-centered .avatar-stage .avatar-motion-canvas{z-index:1}
+.hero-aurora{translate:var(--au-x,0px) 0}
+@media(max-width:1100px) and (min-width:641px){.hero-centered .hero-wordmark{font-size:18.6vw}.hero-centered .hero-wordmark>span{-webkit-text-stroke:2px rgba(214,166,98,.95)}}
+@media(max-width:640px){.hero-centered .hero-wordmark{font-size:19vw;left:0;right:0}.hero-centered .hero-wordmark>span{-webkit-text-stroke:1.4px rgba(214,166,98,.95);transform:scaleX(.92) scaleY(1.45)}}
+@media(prefers-reduced-motion:reduce){.hero-centered .hero-wordmark{transform:none}.hero-aurora{translate:none}}
+/* Chữ đặc vàng ánh kim — không dùng viền (viền làm lộ nét chồng bên trong font Outfit) */
+.hero-centered .hero-wordmark>span,.hero-centered .hero-wordmark .wordmark-left,.hero-centered .hero-wordmark .wordmark-right{-webkit-text-stroke:0!important;background-image:linear-gradient(180deg,#fbe9c6 0%,#efc98a 42%,#d9a45c 72%,#b98243 100%)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 0 rgba(255,255,255,.6)) drop-shadow(0 18px 30px rgba(185,130,67,.28)) drop-shadow(0 0 60px rgba(255,205,140,.35))}
+/* Thứ tự lớp: aurora (0) < chữ (1) < nhân vật (2) */
+.hero-centered .hero-copy{z-index:1}
+.hero-centered .hero-aurora,.hero-centered .hero-ribbon{z-index:0;opacity:.75}
+.hero-centered .avatar-stage{z-index:2}
+.hero-centered .avatar-stage:before{width:min(520px,50vw);background:radial-gradient(closest-side,rgba(255,255,255,.85),rgba(255,255,255,.35) 60%,transparent)}
+/* Mobile: chữ PORTFOLIO đặt ở khoảng trống phía trên, nhân vật chồng nhẹ lên chân chữ */
+@media(max-width:640px){
+  .hero-centered .hero-wordmark{top:150px;height:150px;font-size:19.5vw}
+  .hero-centered .hero-wordmark>span{transform:scaleX(.92) scaleY(1.35)}
+  header nav{white-space:nowrap}
+  header nav a[href="#process"]{display:none}
+}
+@media(max-width:640px){.hero-centered .hero-wordmark{font-size:18vw}.hero-centered .hero-wordmark .wordmark-left{margin-right:-.075em}}
+.hero-centered .hero-wordmark .wordmark-left{margin-right:-.12em}
+@media(max-width:640px){.hero-centered .hero-wordmark .wordmark-left{margin-right:-.15em}}
