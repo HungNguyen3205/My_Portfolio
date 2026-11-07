@@ -18,9 +18,8 @@
   // Clockwise poses from the original take, starting at screen right.
   const poses = [145, 176, 193, 19, 43, 60, 79, 105];
   // The end of the source take contains a short glance toward the laptop.
-  const workFrames = [194, 200];
+  const workPose = 200;
   const inactivityDelay = 850;
-  let working = false;
   let idleTimer;
   let position = 0;
   let target = 0;
@@ -52,6 +51,7 @@
   }
 
   function draw(frame) {
+    if (frame === lastFrame) return true;
     const index = stripFor(frame);
     const sheet = getStrip(index);
     getStrip((index + 1) % stripCount);
@@ -62,10 +62,8 @@
       if (gap > 1 && gap < stripCount - 1) sheets.delete(key);
     }
     if (!sheet.bitmap) return false;
-    if (frame !== lastFrame) {
-      context.drawImage(sheet.bitmap, (frame % stripSize) * width, 0, width, height, 0, 0, width, height);
-      lastFrame = frame;
-    }
+    context.drawImage(sheet.bitmap, (frame % stripSize) * width, 0, width, height, 0, 0, width, height);
+    lastFrame = frame;
     return true;
   }
 
@@ -75,8 +73,7 @@
     previousTime = time;
     const delta = distance(position, target);
     // Ease velocity itself so a new pointer target cannot snap the playback speed.
-    const speed = working && position >= workFrames[0] && position <= workFrames[1] ? 0.014 : 0.052;
-    const desiredVelocity = Math.max(-speed, Math.min(speed, delta / 170));
+    const desiredVelocity = Math.max(-0.046, Math.min(0.046, delta / 185));
     const nextVelocity = velocity + (desiredVelocity - velocity) * (1 - Math.exp(-elapsed / 75));
     // At most one source frame per paint, even after a slow display refresh.
     const step = Math.max(-0.95, Math.min(0.95, nextVelocity * elapsed));
@@ -90,11 +87,6 @@
     if (draw(frame)) {
       position = next;
       velocity = nextVelocity;
-    } else {
-      velocity = 0;
-    }
-    if (working && position === target) {
-      target = target === workFrames[0] ? workFrames[1] : workFrames[0];
     }
     if (Math.abs(distance(position, target)) >= 0.01) {
       request = requestAnimationFrame(tick);
@@ -111,28 +103,22 @@
   function idle() {
     clearTimeout(idleTimer);
     if (paused || reduced.matches) {
-      working = false;
       moveTo(Math.abs(distance(position, 0)) < Math.abs(distance(position, 210)) ? 0 : 210);
       return;
     }
-    if (!working) {
-      working = true;
-      moveTo(workFrames[1]);
-    }
+    moveTo(workPose);
   }
 
   function follow(event) {
     if (!ready || paused || reduced.matches) return;
     clearTimeout(idleTimer);
     idleTimer = setTimeout(idle, inactivityDelay);
-    working = false;
     const bounds = (event.pointerType === 'touch' ? canvas : hero).getBoundingClientRect();
     const x = (event.clientX - bounds.left) / bounds.width * 2 - 1;
     const y = (event.clientY - bounds.top) / bounds.height * 2 - 1;
     const radius = Math.hypot(x, y);
     inIdleZone = radius < (inIdleZone ? 0.26 : 0.20);
     if (inIdleZone) {
-      moveTo(0);
       return;
     }
     const angle = (Math.atan2(y, x) + 2 * Math.PI) % (2 * Math.PI);
@@ -145,7 +131,6 @@
 
   function refresh() {
     clearTimeout(idleTimer);
-    working = false;
     const stopped = paused || reduced.matches;
     button.disabled = reduced.matches;
     button.setAttribute('aria-pressed', String(stopped));
