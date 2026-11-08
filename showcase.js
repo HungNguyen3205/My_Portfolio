@@ -4,11 +4,18 @@ const GH = 'https://github.com/HungNguyen3205/';
 
 window.PORTFOLIO_PROJECTS = [
   {
-    id: 'work', name: 'DANAVA Work', kicker: 'Ứng dụng quản lý công việc', tags: ['app'], status: 'live', featured: true,
-    url: 'https://workspace.danava.com.vn', image: 'assets/danava-work-poster.jpg', accent: '#b9a6ef', video: true,
-    desc: 'Không gian làm việc chung: theo dõi công việc, thành viên và tiến độ trong cùng một hệ thống.',
-    features: ['Bảng Kanban, danh sách và lịch trên cùng một nguồn dữ liệu', 'Phân quyền theo từng Board', 'Cài đặt như ứng dụng với PWA'],
-    stack: ['React', 'TypeScript', 'Laravel', 'PWA']
+    id: 'gold', name: 'Giá Vàng Today', kicker: 'Ứng dụng Next.js · Đang phát triển', tags: ['app'], status: 'source',
+    repo: 'GiaVangToday', image: 'assets/shots/gold.webp?v=1', accent: '#d7bb70', cover: { bg: '#d7bb70', fg: '#3a2c08', mark: 'Au', line: 'GiaVangToday' },
+    desc: 'Bảng theo dõi kim loại quý AURUM: giá vàng, bạc, đồng và tỷ giá trên một màn hình — đang trong giai đoạn phát triển.',
+    features: ['Giá vàng 24K, bạc, đồng, tỷ giá USD cập nhật theo ngày', 'Biểu đồ biến động thị trường theo ngày, tuần, tháng, năm', 'Chỉ số tâm lý thị trường & danh sách theo dõi'],
+    stack: ['Next.js', 'TypeScript', 'Recharts', 'Three.js']
+  },
+  {
+    id: 'car', name: 'Car Rental — Midnight Luxury', kicker: 'Ứng dụng thuê xe · AI', tags: ['app', 'ai'], status: 'source',
+    repo: 'Car_Rental_Website', image: 'assets/shots/car.webp?v=1', accent: '#1c242c',
+    desc: 'Nền tảng thuê xe trực tuyến tối giản, sang trọng, có trợ lý AI tự phát triển.',
+    features: ['Đặt xe, chọn điểm đón/trả trên bản đồ, thanh toán QR', 'Trợ lý AI NLP tự huấn luyện, chạy trên FastAPI', 'Trang quản trị xe, đơn hàng, người dùng, phân quyền'],
+    stack: ['Vue 3', 'Laravel', 'FastAPI', 'Python', 'MySQL']
   },
   {
     id: 'go', name: 'DANAVA Go', kicker: 'Nền tảng đặt vé xe khách', tags: ['app'], status: 'live', featured: true,
@@ -16,41 +23,6 @@ window.PORTFOLIO_PROJECTS = [
     desc: 'Website đặt vé đa nhà xe, biến việc mua vé thành khởi đầu của một chuyến đi.',
     features: ['Tìm chuyến → chọn ghế → nhận vé điện tử', 'App riêng cho từng nhà xe theo thương hiệu', 'Phân vai chủ nhà xe, tài xế; quét vé theo chuyến'],
     stack: ['React 19', 'TypeScript', 'Framer Motion', 'Laravel 13']
-  },
-  {
-    id: 'coach', name: 'DANAVA AI Coach', kicker: 'Thị giác máy tính · AI', tags: ['ai'], status: 'source', featured: true,
-    repo: 'CAMERA_PhanTichTuThe', accent: '#7fd3c6', cover: { bg: '#10201f', fg: '#a8eee3', mark: 'MOVE', line: 'Biến chuyển động thành dữ liệu.' },
-    desc: 'Đếm hít đất qua camera bằng máy trạng thái chuyển động — chỉ tính khi làm đúng và đủ.',
-    features: ['Tính góc Vai – Khuỷu – Cổ tay theo thời gian thực', 'Lọc nhiễu bằng EMA và vùng trễ hysteresis', '10/10 bài kiểm thử đạt, ổn định ở 15–60 FPS'],
-    stack: ['JavaScript', 'MediaPipe', 'WebRTC']
-  },
-  {
-    id: 'run', name: 'Bước Chạy Nhịp Sống', kicker: 'Landing page sự kiện', tags: ['landing'], status: 'live', featured: true,
-    url: 'https://buoc-chay-nhip-song.vercel.app/', repo: 'BUOC-NHAY-NHIP-SONG', image: 'assets/shots/run.webp?v=2', accent: '#3a7bd5',
-    desc: 'Trang đăng ký cho giải chạy marathon tại Đà Nẵng — mở đầu bằng minh họa cầu Rồng.',
-    features: ['Màn mở đầu minh họa theo chủ đề thành phố', 'Thông tin sự kiện rõ ràng trên mọi màn hình', 'Form đăng ký kèm quy trình xác nhận'],
-    stack: ['HTML', 'CSS', 'JavaScript', 'Vercel']
-  },
-  {
-    id: 'wello', name: 'Wellosophy', kicker: 'Landing page sản phẩm', tags: ['landing'], status: 'live',
-    url: 'https://wellosophy.danava.com.vn', repo: 'LandingPage_Wellosophy', image: 'assets/shots/wello.webp?v=2', accent: '#16423c',
-    desc: 'Landing page cho bộ 3 Cân bằng Trục Não – Da – Ruột của Wellosophy by Oriflame.',
-    features: ['Phong cách Bắc Âu: xanh ngọc đậm và vàng champagne', 'Scroll reveal, bộ đếm số động, hiệu ứng shimmer', 'Ảnh được tách khỏi base64 để trang tải nhanh'],
-    stack: ['HTML', 'CSS', 'JavaScript', 'cPanel']
-  },
-  {
-    id: 'nq', name: 'Như Quỳnh — Portfolio', kicker: 'Portfolio thiết kế đồ họa', tags: ['landing'], status: 'live',
-    url: 'https://phamvunhuquynh.vercel.app', repo: 'Portfolio_PhamVuNhuQuynh', image: 'assets/shots/nq.webp?v=2', accent: '#c2a051',
-    desc: 'Portfolio cá nhân cho Phạm Vũ Như Quỳnh: 16 tác phẩm, kể chuyện bằng chuyển động.',
-    features: ['16 tác phẩm lấy trực tiếp từ Google Drive', 'Bộ lọc, xem ảnh lớn, điều hướng bằng phím ← → Esc', 'Chữ hero, marquee, archive ghim theo cuộn'],
-    stack: ['HTML', 'CSS', 'JavaScript', 'Vercel']
-  },
-  {
-    id: 'bds', name: 'Landing Page Bất Động Sản', kicker: 'Landing page bất động sản', tags: ['landing'], status: 'live',
-    url: 'https://landing-page-bds-psi.vercel.app', repo: 'LandingPage_BDS', image: 'assets/shots/bds.webp?v=2', accent: '#b8955a',
-    desc: 'Landing page cho dự án nghỉ dưỡng ven biển Vinhomes Hải Vân Bay, Đà Nẵng.',
-    features: ['Hero điện ảnh kèm các chỉ số nổi bật', 'Tổng quan, sản phẩm, tiện ích, vị trí, thư viện ảnh', 'Đăng ký tư vấn, chat và gọi luôn trong tầm tay'],
-    stack: ['React', 'TypeScript', 'Vite', 'Vercel']
   },
   {
     id: 'danava', name: 'DANAVA — Website thương hiệu', kicker: 'Website doanh nghiệp', tags: ['landing'], status: 'source',
@@ -67,25 +39,46 @@ window.PORTFOLIO_PROJECTS = [
     stack: ['React', 'TypeScript', 'Vite']
   },
   {
-    id: 'car', name: 'Car Rental — Midnight Luxury', kicker: 'Ứng dụng thuê xe · AI', tags: ['app', 'ai'], status: 'source',
-    repo: 'Car_Rental_Website', image: 'assets/shots/car.webp?v=1', accent: '#1c242c',
-    desc: 'Nền tảng thuê xe trực tuyến tối giản, sang trọng, có trợ lý AI tự phát triển.',
-    features: ['Đặt xe, chọn điểm đón/trả trên bản đồ, thanh toán QR', 'Trợ lý AI NLP tự huấn luyện, chạy trên FastAPI', 'Trang quản trị xe, đơn hàng, người dùng, phân quyền'],
-    stack: ['Vue 3', 'Laravel', 'FastAPI', 'Python', 'MySQL']
+    id: 'bds', name: 'Landing Page Bất Động Sản', kicker: 'Landing page bất động sản', tags: ['landing'], status: 'live',
+    url: 'https://landing-page-bds-psi.vercel.app', repo: 'LandingPage_BDS', image: 'assets/shots/bds.webp?v=2', accent: '#b8955a',
+    desc: 'Landing page cho dự án nghỉ dưỡng ven biển Vinhomes Hải Vân Bay, Đà Nẵng.',
+    features: ['Hero điện ảnh kèm các chỉ số nổi bật', 'Tổng quan, sản phẩm, tiện ích, vị trí, thư viện ảnh', 'Đăng ký tư vấn, chat và gọi luôn trong tầm tay'],
+    stack: ['React', 'TypeScript', 'Vite', 'Vercel']
+  },
+  {
+    id: 'nq', name: 'Như Quỳnh — Portfolio', kicker: 'Portfolio thiết kế đồ họa', tags: ['landing'], status: 'live',
+    url: 'https://phamvunhuquynh.vercel.app', repo: 'Portfolio_PhamVuNhuQuynh', image: 'assets/shots/nq.webp?v=2', accent: '#c2a051',
+    desc: 'Portfolio cá nhân cho Phạm Vũ Như Quỳnh: 16 tác phẩm, kể chuyện bằng chuyển động.',
+    features: ['16 tác phẩm lấy trực tiếp từ Google Drive', 'Bộ lọc, xem ảnh lớn, điều hướng bằng phím ← → Esc', 'Chữ hero, marquee, archive ghim theo cuộn'],
+    stack: ['HTML', 'CSS', 'JavaScript', 'Vercel']
+  },
+  {
+    id: 'run', name: 'Bước Chạy Nhịp Sống', kicker: 'Landing page sự kiện', tags: ['landing'], status: 'live', featured: true,
+    url: 'https://buoc-chay-nhip-song.vercel.app/', repo: 'BUOC-NHAY-NHIP-SONG', image: 'assets/shots/run.webp?v=2', accent: '#3a7bd5',
+    desc: 'Trang đăng ký cho giải chạy marathon tại Đà Nẵng — mở đầu bằng minh họa cầu Rồng.',
+    features: ['Màn mở đầu minh họa theo chủ đề thành phố', 'Thông tin sự kiện rõ ràng trên mọi màn hình', 'Form đăng ký kèm quy trình xác nhận'],
+    stack: ['HTML', 'CSS', 'JavaScript', 'Vercel']
+  },
+  {
+    id: 'wello', name: 'Wellosophy', kicker: 'Landing page sản phẩm', tags: ['landing'], status: 'live',
+    url: 'https://wellosophy.danava.com.vn', repo: 'LandingPage_Wellosophy', image: 'assets/shots/wello.webp?v=2', accent: '#16423c',
+    desc: 'Landing page cho bộ 3 Cân bằng Trục Não – Da – Ruột của Wellosophy by Oriflame.',
+    features: ['Phong cách Bắc Âu: xanh ngọc đậm và vàng champagne', 'Scroll reveal, bộ đếm số động, hiệu ứng shimmer', 'Ảnh được tách khỏi base64 để trang tải nhanh'],
+    stack: ['HTML', 'CSS', 'JavaScript', 'cPanel']
+  },
+  {
+    id: 'work', name: 'DANAVA Work', kicker: 'Ứng dụng quản lý công việc', tags: ['app'], status: 'live', featured: true,
+    url: 'https://workspace.danava.com.vn', image: 'assets/danava-work-poster.jpg', accent: '#b9a6ef', video: true,
+    desc: 'Không gian làm việc chung: theo dõi công việc, thành viên và tiến độ trong cùng một hệ thống.',
+    features: ['Bảng Kanban, danh sách và lịch trên cùng một nguồn dữ liệu', 'Phân quyền theo từng Board', 'Cài đặt như ứng dụng với PWA'],
+    stack: ['React', 'TypeScript', 'Laravel', 'PWA']
   },
   {
     id: 'vif', name: 'VIF — VisionFit Assistant', kicker: 'Trợ lý AI tập luyện · Demo', tags: ['ai'], status: 'demo',
-    repo: 'Chatbox_AI', accent: '#9bb83a', cover: { bg: '#dce6b9', fg: '#2f3d22', mark: 'VIF', line: 'Người bạn đồng hành cho từng buổi tập.' },
+    repo: 'Chatbox_AI', image: 'assets/shots/vif.webp?v=1', accent: '#9bb83a', cover: { bg: '#dce6b9', fg: '#2f3d22', mark: 'VIF', line: 'Người bạn đồng hành cho từng buổi tập.' },
     desc: 'Trợ lý tập luyện tiếng Việt, kết nối hệ thống phòng tập VisionFit qua API.',
     features: ['Đăng nhập theo vai trò: hội viên, PT, quản lý', 'Lịch sử chat riêng từng tài khoản, tự dọn theo hạn', 'Không gửi email, SĐT, mật khẩu tới mô hình AI'],
     stack: ['Node.js', 'SQLite', 'Laravel', 'OpenAI API']
-  },
-  {
-    id: 'mkt', name: 'TOOL MKT — AI Content', kicker: 'Công cụ marketing AI · MVP', tags: ['ai'], status: 'source',
-    repo: 'TOOL-MKT', image: 'assets/shots/mkt.webp?v=1', accent: '#c47a3c', cover: { bg: '#e9d8c6', fg: '#4a2f1d', mark: 'MKT', line: 'Viết bằng AI · Duyệt · Lên lịch đăng.' },
-    desc: 'Công cụ nội bộ tự sinh nội dung bằng AI và đăng bài lên Facebook Page.',
-    features: ['Sinh nội dung bằng Ollama chạy local hoặc OpenAI', 'Quy trình duyệt bài giữa người viết và người duyệt', 'Lên lịch, đăng tự động qua Meta Graph API'],
-    stack: ['React', 'Laravel 11', 'SQLite', 'Ollama']
   },
   {
     id: 'studio', name: 'DANAVA Video Studio', kicker: 'Tự động dựng video · AI', tags: ['ai'], status: 'source',
@@ -102,12 +95,20 @@ window.PORTFOLIO_PROJECTS = [
     stack: ['Chrome Extension', 'Laravel', 'Vue', 'SQLite']
   },
   {
-    id: 'gold', name: 'Giá Vàng Today', kicker: 'Ứng dụng Next.js · Đang phát triển', tags: ['app'], status: 'source',
-    repo: 'GiaVangToday', image: 'assets/shots/gold.webp?v=1', accent: '#d7bb70', cover: { bg: '#d7bb70', fg: '#3a2c08', mark: 'Au', line: 'GiaVangToday' },
-    desc: 'Bảng theo dõi kim loại quý AURUM: giá vàng, bạc, đồng và tỷ giá trên một màn hình — đang trong giai đoạn phát triển.',
-    features: ['Giá vàng 24K, bạc, đồng, tỷ giá USD cập nhật theo ngày', 'Biểu đồ biến động thị trường theo ngày, tuần, tháng, năm', 'Chỉ số tâm lý thị trường & danh sách theo dõi'],
-    stack: ['Next.js', 'TypeScript', 'Recharts', 'Three.js']
+    id: 'mkt', name: 'TOOL MKT — AI Content', kicker: 'Công cụ marketing AI · MVP', tags: ['ai'], status: 'source',
+    repo: 'TOOL-MKT', image: 'assets/shots/mkt.webp?v=1', accent: '#c47a3c', cover: { bg: '#e9d8c6', fg: '#4a2f1d', mark: 'MKT', line: 'Viết bằng AI · Duyệt · Lên lịch đăng.' },
+    desc: 'Công cụ nội bộ tự sinh nội dung bằng AI và đăng bài lên Facebook Page.',
+    features: ['Sinh nội dung bằng Ollama chạy local hoặc OpenAI', 'Quy trình duyệt bài giữa người viết và người duyệt', 'Lên lịch, đăng tự động qua Meta Graph API'],
+    stack: ['React', 'Laravel 11', 'SQLite', 'Ollama']
+  },
+  {
+    id: 'coach', name: 'DANAVA AI Coach', kicker: 'Thị giác máy tính · AI', tags: ['ai'], status: 'source', featured: true,
+    repo: 'CAMERA_PhanTichTuThe', accent: '#7fd3c6', cover: { bg: '#10201f', fg: '#a8eee3', mark: 'MOVE', line: 'Biến chuyển động thành dữ liệu.' },
+    desc: 'Đếm hít đất qua camera bằng máy trạng thái chuyển động — chỉ tính khi làm đúng và đủ.',
+    features: ['Tính góc Vai – Khuỷu – Cổ tay theo thời gian thực', 'Lọc nhiễu bằng EMA và vùng trễ hysteresis', '10/10 bài kiểm thử đạt, ổn định ở 15–60 FPS'],
+    stack: ['JavaScript', 'MediaPipe', 'WebRTC']
   }
+
 ];
 
 const STATUS = { live: 'Đang chạy', source: 'Mã nguồn', demo: 'Bản demo' };
