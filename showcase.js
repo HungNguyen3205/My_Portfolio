@@ -12,7 +12,7 @@ window.PORTFOLIO_PROJECTS = [
   },
   {
     id: 'go', name: 'DANAVA Go', kicker: 'Nền tảng đặt vé xe khách', tags: ['app'], status: 'live', featured: true,
-    url: 'https://danavago.com', image: 'assets/shots/go.webp', accent: '#f39a3d',
+    url: 'https://danavago.com', image: 'assets/shots/go.webp?v=2', accent: '#f39a3d',
     desc: 'Website đặt vé đa nhà xe, biến việc mua vé thành khởi đầu của một chuyến đi.',
     features: ['Tìm chuyến → chọn ghế → nhận vé điện tử', 'App riêng cho từng nhà xe theo thương hiệu', 'Phân vai chủ nhà xe, tài xế; quét vé theo chuyến'],
     stack: ['React 19', 'TypeScript', 'Framer Motion', 'Laravel 13']
@@ -26,28 +26,28 @@ window.PORTFOLIO_PROJECTS = [
   },
   {
     id: 'run', name: 'Bước Chạy Nhịp Sống', kicker: 'Landing page sự kiện', tags: ['landing'], status: 'live', featured: true,
-    url: 'https://buoc-chay-nhip-song.vercel.app/', repo: 'BUOC-NHAY-NHIP-SONG', image: 'assets/shots/run.webp', accent: '#3a7bd5',
+    url: 'https://buoc-chay-nhip-song.vercel.app/', repo: 'BUOC-NHAY-NHIP-SONG', image: 'assets/shots/run.webp?v=2', accent: '#3a7bd5',
     desc: 'Trang đăng ký cho giải chạy marathon tại Đà Nẵng — mở đầu bằng minh họa cầu Rồng.',
     features: ['Màn mở đầu minh họa theo chủ đề thành phố', 'Thông tin sự kiện rõ ràng trên mọi màn hình', 'Form đăng ký kèm quy trình xác nhận'],
     stack: ['HTML', 'CSS', 'JavaScript', 'Vercel']
   },
   {
     id: 'wello', name: 'Wellosophy', kicker: 'Landing page sản phẩm', tags: ['landing'], status: 'live',
-    url: 'https://wellosophy.danava.com.vn', repo: 'LandingPage_Wellosophy', image: 'assets/shots/wello.webp', accent: '#16423c',
+    url: 'https://wellosophy.danava.com.vn', repo: 'LandingPage_Wellosophy', image: 'assets/shots/wello.webp?v=2', accent: '#16423c',
     desc: 'Landing page cho bộ 3 Cân bằng Trục Não – Da – Ruột của Wellosophy by Oriflame.',
     features: ['Phong cách Bắc Âu: xanh ngọc đậm và vàng champagne', 'Scroll reveal, bộ đếm số động, hiệu ứng shimmer', 'Ảnh được tách khỏi base64 để trang tải nhanh'],
     stack: ['HTML', 'CSS', 'JavaScript', 'cPanel']
   },
   {
     id: 'nq', name: 'Như Quỳnh — Portfolio', kicker: 'Portfolio thiết kế đồ họa', tags: ['landing'], status: 'live',
-    url: 'https://phamvunhuquynh.vercel.app', repo: 'Portfolio_PhamVuNhuQuynh', image: 'assets/shots/nq.webp', accent: '#c2a051',
+    url: 'https://phamvunhuquynh.vercel.app', repo: 'Portfolio_PhamVuNhuQuynh', image: 'assets/shots/nq.webp?v=2', accent: '#c2a051',
     desc: 'Portfolio cá nhân cho Phạm Vũ Như Quỳnh: 16 tác phẩm, kể chuyện bằng chuyển động.',
     features: ['16 tác phẩm lấy trực tiếp từ Google Drive', 'Bộ lọc, xem ảnh lớn, điều hướng bằng phím ← → Esc', 'Chữ hero, marquee, archive ghim theo cuộn'],
     stack: ['HTML', 'CSS', 'JavaScript', 'Vercel']
   },
   {
     id: 'bds', name: 'Landing Page Bất Động Sản', kicker: 'Landing page bất động sản', tags: ['landing'], status: 'live',
-    url: 'https://landing-page-bds-psi.vercel.app', repo: 'LandingPage_BDS', image: 'assets/shots/bds.webp', accent: '#b8955a',
+    url: 'https://landing-page-bds-psi.vercel.app', repo: 'LandingPage_BDS', image: 'assets/shots/bds.webp?v=2', accent: '#b8955a',
     desc: 'Landing page cho dự án nghỉ dưỡng ven biển Vinhomes Hải Vân Bay, Đà Nẵng.',
     features: ['Hero điện ảnh kèm các chỉ số nổi bật', 'Tổng quan, sản phẩm, tiện ích, vị trí, thư viện ảnh', 'Đăng ký tư vấn, chat và gọi luôn trong tầm tay'],
     stack: ['React', 'TypeScript', 'Vite', 'Vercel']
@@ -68,7 +68,7 @@ window.PORTFOLIO_PROJECTS = [
   },
   {
     id: 'car', name: 'Car Rental — Midnight Luxury', kicker: 'Ứng dụng thuê xe · AI', tags: ['app', 'ai'], status: 'source',
-    repo: 'Car_Rental_Website', image: 'assets/car.webp', accent: '#1c242c',
+    repo: 'Car_Rental_Website', image: 'assets/shots/car.webp?v=1', accent: '#1c242c',
     desc: 'Nền tảng thuê xe trực tuyến tối giản, sang trọng, có trợ lý AI tự phát triển.',
     features: ['Đặt xe, chọn điểm đón/trả trên bản đồ, thanh toán QR', 'Trợ lý AI NLP tự huấn luyện, chạy trên FastAPI', 'Trang quản trị xe, đơn hàng, người dùng, phân quyền'],
     stack: ['Vue 3', 'Laravel', 'FastAPI', 'Python', 'MySQL']
@@ -103,10 +103,10 @@ window.PORTFOLIO_PROJECTS = [
   },
   {
     id: 'gold', name: 'Giá Vàng Today', kicker: 'Ứng dụng Next.js · Đang phát triển', tags: ['app'], status: 'source',
-    repo: 'GiaVangToday', accent: '#d7bb70', cover: { bg: '#d7bb70', fg: '#3a2c08', mark: 'Au', line: 'GiaVangToday' },
-    desc: 'Dự án về giá vàng xây dựng bằng Next.js và TypeScript, đang trong giai đoạn phát triển.',
-    features: [],
-    stack: ['Next.js', 'TypeScript']
+    repo: 'GiaVangToday', image: 'assets/shots/gold.webp?v=1', accent: '#d7bb70', cover: { bg: '#d7bb70', fg: '#3a2c08', mark: 'Au', line: 'GiaVangToday' },
+    desc: 'Bảng theo dõi kim loại quý AURUM: giá vàng, bạc, đồng và tỷ giá trên một màn hình — đang trong giai đoạn phát triển.',
+    features: ['Giá vàng 24K, bạc, đồng, tỷ giá USD cập nhật theo ngày', 'Biểu đồ biến động thị trường theo ngày, tuần, tháng, năm', 'Chỉ số tâm lý thị trường & danh sách theo dõi'],
+    stack: ['Next.js', 'TypeScript', 'Recharts', 'Three.js']
   }
 ];
 

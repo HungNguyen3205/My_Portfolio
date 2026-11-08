@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#191d23"><title>Nguyễn Nam Hùng — Những dòng code, những dấu ấn</title><meta name="description" content="Hành trình xây dựng website và ứng dụng của Nguyễn Nam Hùng. Xem video demo, khám phá dự án và trải nghiệm sản phẩm thực tế."><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23191d23'/%3E%3Ctext x='32' y='45' font-family='Arial,sans-serif' font-size='36' font-weight='900' text-anchor='middle' fill='%23c5bac4'%3EH%3C/text%3E%3C/svg%3E"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Outfit:wght@700;800;900&family=Playfair+Display:ital,wght@1,400;1,500&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="story.css"><link rel="stylesheet" href="exhibition.css"><link rel="stylesheet" href="avatar.css?v=wordmark-2"><link rel="stylesheet" href="intro.css?v=slate-1"><link rel="stylesheet" href="showcase.css?v=8"><script src="intro.js?v=seamless-2" defer></script></head><body>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#191d23"><title>Nguyễn Nam Hùng — Những dòng code, những dấu ấn</title><meta name="description" content="Hành trình xây dựng website và ứng dụng của Nguyễn Nam Hùng. Xem video demo, khám phá dự án và trải nghiệm sản phẩm thực tế."><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23191d23'/%3E%3Ctext x='32' y='45' font-family='Arial,sans-serif' font-size='36' font-weight='900' text-anchor='middle' fill='%23c5bac4'%3EH%3C/text%3E%3C/svg%3E"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Outfit:wght@700;800;900&family=Playfair+Display:ital,wght@1,400;1,500&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="story.css"><link rel="stylesheet" href="exhibition.css"><link rel="stylesheet" href="avatar.css?v=wordmark-2"><link rel="stylesheet" href="intro.css?v=slate-1"><link rel="stylesheet" href="showcase.css?v=13"><script src="intro.js?v=seamless-2" defer></script></head><body>
 <dialog class="portfolio-intro" id="portfolio-intro" aria-label="Màn hình mở đầu portfolio">
   <div class="intro-splash intro-game" id="intro-splash">
     <div class="game-hud-bar" aria-hidden="true">
@@ -116,6 +116,34 @@
   </div>
 </section>
 
+<!-- ALBUM · mỗi thư mục ảnh là một bàn ảnh riêng (dựng bởi album.js; thêm ảnh: xem BOARDS trong album.js) -->
+<section class="sc-album" id="album" aria-labelledby="album-title">
+  <span class="sc-album__ghost" aria-hidden="true">MEMORIES</span>
+  <div class="sc-inner">
+    <div class="sc-album__head">
+      <div>
+        <p class="sc-kicker">Album · Lớn lên từng ngày</p>
+        <h2 class="sc-h2" id="album-title">Từ cậu bé ngày ấy<br><em>đến tôi hôm nay.</em></h2>
+      </div>
+      <div class="sc-album__side">
+        <p class="sc-lead">Gia đình, chính tôi, người thương và ba bé cún — <span id="album-total">0</span> khoảnh khắc làm nên con người tôi. Rê chuột vào một tấm để nó sáng lên, kéo để sắp xếp, bấm để xem lớn.</p>
+        <button type="button" class="sc-album__shuffle" id="album-shuffle"><span aria-hidden="true">↻</span> Tung lại ảnh</button>
+      </div>
+    </div>
+    <nav class="sc-album__tabs" id="album-tabs" aria-label="Đi tới từng album"></nav>
+    <div class="sc-album__boards" id="album-boards"></div>
+  </div>
+  <dialog class="sc-lightbox" id="album-lightbox" aria-label="Xem ảnh lớn">
+    <figure class="sc-lightbox__card">
+      <img id="album-lightbox-img" alt="">
+      <figcaption><b id="album-lightbox-year"></b><span id="album-lightbox-cap"></span><small id="album-lightbox-count"></small></figcaption>
+    </figure>
+    <button type="button" class="sc-lightbox__nav sc-lightbox__prev" data-step="-1" aria-label="Ảnh trước">←</button>
+    <button type="button" class="sc-lightbox__nav sc-lightbox__next" data-step="1" aria-label="Ảnh sau">→</button>
+    <button type="button" class="sc-lightbox__close" aria-label="Đóng">✕</button>
+  </dialog>
+</section>
+
 <!-- 02 · CON SỐ -->
 <section class="sc-section sc-numbers" aria-labelledby="numbers-title">
   <div class="sc-inner">
@@ -188,7 +216,7 @@
       <div class="sc-feature__media sc-reveal">
         <a class="sc-frame" href="https://danavago.com" target="_blank" rel="noopener noreferrer" aria-label="Mở website DANAVA Go">
           <div class="sc-frame__bar"><span class="sc-frame__dots"><i></i><i></i><i></i></span><span class="sc-frame__url">danavago.com</span></div>
-          <img src="assets/shots/go.webp" alt="Trang chủ DANAVA Go: tìm chuyến từ Đà Nẵng đi Hội An" width="1280" height="800" loading="lazy">
+          <img src="assets/shots/go.webp?v=2" alt="Trang chủ DANAVA Go: tìm chuyến từ Đà Nẵng đi Hội An" width="1280" height="800" loading="lazy">
         </a>
       </div>
       <div class="sc-feature__body sc-reveal">
@@ -250,7 +278,7 @@
       <div class="sc-feature__media sc-reveal">
         <a class="sc-frame" href="https://buoc-chay-nhip-song.vercel.app/" target="_blank" rel="noopener noreferrer" aria-label="Mở website Bước Chạy Nhịp Sống">
           <div class="sc-frame__bar"><span class="sc-frame__dots"><i></i><i></i><i></i></span><span class="sc-frame__url">buoc-chay-nhip-song.vercel.app</span></div>
-          <img src="assets/shots/run.webp" alt="Màn mở đầu Bước Chạy Nhịp Sống Marathon với cầu Rồng Đà Nẵng" width="1280" height="800" loading="lazy">
+          <img src="assets/shots/run.webp?v=2" alt="Màn mở đầu Bước Chạy Nhịp Sống Marathon với cầu Rồng Đà Nẵng" width="1280" height="800" loading="lazy">
         </a>
       </div>
       <div class="sc-feature__body sc-reveal">
@@ -367,4 +395,4 @@
 
 <dialog id="cinema" aria-labelledby="cinema-title"><div class="cinema-head"><div><p class="eyebrow">PHÒNG CHIẾU / 01</p><h2 id="cinema-title">DANAVA Work <em>in motion.</em></h2></div><button id="close-cinema" aria-label="Đóng video">✕</button></div><video id="cinema-video" controls playsinline preload="none" poster="assets/danava-work-poster.jpg"><source src="assets/danava-work-demo.mp4" type="video/mp4"></video><div class="cinema-foot"><span>21 GIÂY · DEMO GIAO DIỆN</span><a href="https://workspace.danava.com.vn" target="_blank" rel="noopener noreferrer">Mở website ↗</a></div></dialog>
 <footer class="sc-footer"><a class="logo" href="#home">HÙNG<span>®</span></a><span>© <span id="year">2026</span> Nguyễn Nam Hùng · Thiết kế và lập trình bằng cả trái tim.</span><a href="#home">Trở về đầu trang ↑</a></footer>
-<script src="showcase.js?v=3"></script><script src="showcase-fx.js?v=2"></script><script src="avatar.js?v=seamless-1"></script></body></html>
+<script src="showcase.js?v=5"></script><script src="showcase-fx.js?v=2"></script><script src="album.js?v=8"></script><script src="avatar.js?v=seamless-1"></script></body></html>
