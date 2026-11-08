@@ -10,66 +10,18 @@
 (() => {
   const P = (src, caption, extra = {}) => ({ src: 'assets/album/' + src, caption, year: '', ...extra });
   const BOARDS = [
-    { id: 'family', no: '01', title: 'Gia đình', sub: 'Nơi mọi hành trình bắt đầu', mark: 'heart', photos: [
-      P('gia-dinh.webp', 'Cả nhà mình', { wide: true }),
-    ] },
-    { id: 'hung', no: '02', title: 'Hùng', sub: 'Những khoảnh khắc của riêng tôi', photos: [
-      P('hung-01.webp', 'Góc tường đầy những mảnh giấy'),
+    { id: 'hung', no: '', title: 'Hùng', sub: 'Những khoảnh khắc của riêng tôi', photos: [
       P('hung-02.webp', 'Ống kính hướng lên bầu trời'),
       P('hung-03.webp', 'Nắng chiều & dải ruy băng'),
-      P('hung-04.webp', 'Đêm hội đèn, khăn ca rô'),
-      P('hung-05.webp', 'Mùa lạnh & chiếc khăn quàng'),
-      P('hung-06.webp', 'Tà áo trắng giữa sân chùa'),
-      P('hung-07.webp', 'Kính râm & một buổi chiều chậm'),
-      P('hung-08.webp', 'Những bước chân trên sân cỏ'),
-      P('hung-09.webp', 'Hoàng hôn bên bờ sông'),
-      P('hung-10.webp', 'Vòng quay & gió chiều'),
       P('hung-11.webp', 'Biển, đá & ly cà phê'),
-      P('hung-12.webp', 'Gió biển, kính râm'),
-      P('hung-13.webp', 'Ánh chiều cuối ngày'),
-      P('hung-14.webp', 'Con phố đèn lồng'),
-      P('hung-16.webp', 'Nắng biển xanh'),
-      P('hung-17.webp', 'Một đêm thành phố'),
       P('hung-18.webp', 'Ngược nắng'),
-    ] },
-    { id: 'love', no: '03', title: 'Bé iu', sub: 'Người thương của tôi', mark: 'heart', photos: [
-      P('nguoi-thuong.webp', 'Người thương của tôi'),
-      P('love-cafe.webp', 'Một buổi cà phê xinh'),
-      P('hai-dua-1.webp', 'Khoanh tay tạo dáng', { wide: true, year: '2025' }),
-      P('hai-dua-2.webp', 'Một cái thơm lên tóc', { wide: true, year: '2025' }),
-      P('hai-dua-3.webp', 'Khoác vai cười thật tươi', { wide: true, year: '2025' }),
-      P('hai-dua-4.webp', 'Nháy mắt tinh nghịch', { wide: true, year: '2025' }),
-    ] },
-    { id: 'pet', no: '04', title: 'Cún cưng', sub: 'Ba bé bốn chân của nhà', mark: 'paw', groups: [
-      { name: 'Bi em', photos: [
-        P('bi-1.webp', 'Bi em đón Noel'),
-        P('bi-2.webp', 'Cười tươi bên cây thông'),
-        P('bi-3.webp', 'Ngồi ngoan chụp hình'),
-        P('bi-4.webp', 'Nghiêng đầu dễ thương'),
-        P('bi-5.webp', 'Nằm dài thư giãn'),
-        P('bi-6.webp', 'Lè lưỡi chờ quà'),
-      ] },
-      { name: 'Bông', photos: [
-        P('bong-1.webp', 'Nhìn thẳng ống kính'),
-        P('bong-2.webp', 'Lim dim trong vòng tay', { wide: true }),
-        P('bong-3.webp', 'Ánh mắt tròn xoe'),
-        P('bong-4.webp', 'Nằm ngắm trời đất', { wide: true }),
-        P('bong-5.webp', 'Ngủ say sưa', { wide: true }),
-        P('bong-6.webp', 'Hai đứa nhỏ trên sàn'),
-      ] },
-      { name: 'Đậu', photos: [
-        P('dau-1.webp', 'Nằm gọn trong lòng', { wide: true }),
-        P('dau-2.webp', 'Lông xù buổi tối'),
-        P('dau-3.webp', 'Áo vàng điệu đà'),
-        P('dau-4.webp', 'Hai anh em mặc áo mới'),
-        P('dau-5.webp', 'Ngước nhìn chờ cưng'),
-      ] },
     ] },
   ];
 
   const root = document.getElementById('album-boards');
   if (!root) return;
-  const tabsBox = document.getElementById('album-tabs');
+  const tabsBox = BOARDS.length > 1 ? document.getElementById('album-tabs') : null;
+  if (BOARDS.length < 2) { const t = document.getElementById('album-tabs'); if (t) t.hidden = true; }
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
   const mobile = () => innerWidth <= 760;
@@ -119,7 +71,7 @@
     const meta = el('div', 'sc-board__meta');
     meta.append(h, el('p', 'sc-board__sub', b.sub));
     head.append(meta, el('span', 'sc-board__count', count + ' ảnh'));
-    board.append(head);
+    if (BOARDS.length > 1) board.append(head);
     if (b.groups) {
       b.groups.forEach(g => {
         const sec = el('section', 'sc-board__group');

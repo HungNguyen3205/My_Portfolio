@@ -20,7 +20,8 @@
 
   // Vẽ đúng độ phân giải đang hiển thị (không vẽ 880px rồi để trình duyệt thu nhỏ):
   // mỗi khung nhẹ hơn → giữ được NHIỀU khung đã giải mã sẵn → quay nhanh mà không giật.
-  const SRC_W = 880, SRC_H = 720;
+  // Khung hình nét cao 1320x1080 (trích lại từ video gốc 1080p) → không bị nhoè trên màn hình nét cao.
+  const SRC_W = 1320, SRC_H = 1080;
   const shownW = (stage.querySelector('.avatar-fallback') || canvas).getBoundingClientRect().width || 680;
   const scale = Math.min(1, shownW * Math.min(devicePixelRatio || 1, 2) / SRC_W);
   canvas.width = Math.round(SRC_W * scale);
@@ -28,7 +29,7 @@
   const { width, height } = canvas;
 
   const FRAMES = 239;
-  const src = i => `assets/hero-frames/${String(i).padStart(3, '0')}.webp`;
+  const src = i => `assets/hero-frames/${String(i).padStart(3, '0')}.webp?v=hd1`;
 
   /* ---------- "Đường quay sạch": bỏ các khung nhắm mắt ----------
      Bộ khung gốc là một vòng xoay đầu có 6 lần chớp mắt. Trước đây mỗi lần quay đầu đi ngang qua
@@ -69,86 +70,119 @@
     return wrap(p0 + wrap(p1 - p0) * frac);
   }
 
-  /* ---------- Nạp & giải mã khung hình ---------- */
-  const images = new Array(FRAMES);   // ảnh nén đã tải (nhẹ)
+  /* ---------- Nạp & giải mã khung hình (hàng đợi ưu tiên) ----------
+     Trước đây mỗi lần chuột nhích là ra lệnh giải mã tới 120 khung CÙNG LÚC (mỗi khung 2 lần giải mã)
+     → máy nghẽn, nhân vật khựng. Giờ:
+       - giữ dữ liệu NÉN của mọi khung trong bộ nhớ (nhẹ, ~30MB) → giải mã lại không cần tải lại;
+       - giải mã thẳng từ dữ liệu ảnh ở luồng nền (createImageBitmap(blob)), không qua thẻ <img>;
+       - tối đa 2 khung giải mã cùng lúc, luôn ưu tiên khung GẦN NHẤT phía trước hướng đang quay. */
+  const blobs = new Array(FRAMES);    // dữ liệu nén (Promise<Blob|HTMLImageElement>)
   const bitmaps = new Array(FRAMES);  // ảnh đã giải mã (nặng), giữ giới hạn theo bộ nhớ
   const decoding = new Array(FRAMES);
-  // Máy mạnh giữ sẵn toàn bộ khung mở mắt → quay tới đâu cũng có hình ngay.
+  const waiters = new Array(FRAMES);
   const memGB = navigator.deviceMemory || 4;
-  const budget = (memGB >= 8 ? 420 : memGB >= 4 ? 240 : 130) * 1048576;
-  const MAX_DECODED = Math.max(70, Math.min(N, Math.floor(budget / (width * height * 4))));
-  const decodeAll = MAX_DECODED >= N;
-  let decodedCount = 0;
+  const budget = (memGB >= 8 ? 560 : memGB >= 4 ? 300 : 150) * 1048576;
+  const MAX_DECODED = Math.max(48, Math.min(N, Math.floor(budget / (width * height * 4))));
+  const MAX_ACTIVE = 2;
+  let decodedCount = 0, active = 0;
+  let wantFrom = 0, wantTo = 0;       // đoạn đường quay đang cần (vị trí không cuộn vòng)
 
-  // Nạp bằng thẻ <img>: chạy được cả khi mở file trực tiếp (file://), Live Server hay hosting thật.
-  function loadImage(i) {
-    if (!images[i]) images[i] = new Promise((resolve, reject) => {
-      const img = new Image();
-      img.decoding = 'async';
-      img.onload = () => resolve(img);
-      img.onerror = () => { images[i] = null; reject(new Error('frame ' + i)); };
-      img.src = src(i);
-    });
-    return images[i];
+  // Tải dữ liệu nén: fetch → Blob (giải mã ngoài luồng chính). Mở bằng file:// thì fetch bị chặn → dùng <img>.
+  function loadData(i) {
+    if (!blobs[i]) blobs[i] = fetch(src(i)).then(r => { if (!r.ok) throw 0; return r.blob(); })
+      .catch(() => new Promise((resolve, reject) => {
+        const img = new Image(); img.decoding = 'async';
+        img.onload = () => resolve(img); img.onerror = () => { blobs[i] = null; reject(new Error('frame ' + i)); };
+        img.src = src(i);
+      }));
+    return blobs[i];
   }
 
-  async function toBitmap(img) {
-    try { await img.decode(); } catch (e) {}
+  async function toBitmap(data) {
+    const opts = scale < 1 ? { resizeWidth: width, resizeHeight: height, resizeQuality: 'high' } : undefined;
     if ('createImageBitmap' in window) {
-      if (scale < 1) {
-        try { return await createImageBitmap(img, { resizeWidth: width, resizeHeight: height, resizeQuality: 'high' }); } catch (e) {}
-      }
-      try { return await createImageBitmap(img); } catch (e) {}
+      try { return await createImageBitmap(data, opts); } catch (e) {}
+      try { return await createImageBitmap(data); } catch (e) {}
     }
-    return img;
+    if (data instanceof Blob) {             // trình duyệt rất cũ: giải mã qua <img>
+      const img = new Image(); img.src = URL.createObjectURL(data);
+      try { await img.decode(); } catch (e) {}
+      return img;
+    }
+    return data;
   }
 
-  // decode nhận VỊ TRÍ trên đường quay (v), tự đổi ra khung gốc.
-  function decode(v) {
-    const i = rawAt(v);
-    if (bitmaps[i] || decoding[i]) return decoding[i] || Promise.resolve(bitmaps[i]);
-    decoding[i] = loadImage(i).then(toBitmap).then(bmp => {
-      bitmaps[i] = bmp; decoding[i] = null; decodedCount++;
+  // Khoảng cách ưu tiên của khung gốc i: gần vị trí hiện tại & nằm trên đường đang quay thì giải mã trước.
+  function priority(i) {
+    const d = shortest(wrap(pos), vOf[i]);
+    const dir = Math.sign(wantTo - wantFrom) || Math.sign(vel) || 1;
+    const reach = Math.abs(wantTo - pos);
+    // phía trước hướng quay & còn trong đoạn sắp đi qua → ưu tiên gấp đôi
+    return Math.sign(d) === dir && Math.abs(d) <= reach + 2 ? Math.abs(d) * 0.5 : Math.abs(d);
+  }
+
+  function pump() {
+    while (active < MAX_ACTIVE) {
+      let best = -1, bestP = Infinity;
+      for (let v = 0; v < N; v++) {
+        const i = TRACK[v];
+        if (bitmaps[i] || decoding[i]) continue;
+        const p = waiters[i] ? -1 : priority(i);
+        if (p < bestP) { bestP = p; best = i; }
+      }
+      // Hết khung cần gấp và đã đầy bộ nhớ → thôi, không giải mã thêm.
+      if (best < 0 || (bestP > 6 && decodedCount >= MAX_DECODED)) return;
+      start(best);
+    }
+  }
+
+  function start(i) {
+    active++;
+    decoding[i] = true;
+    loadData(i).then(toBitmap).then(bmp => {
+      bitmaps[i] = bmp; decodedCount++;
       evict();
       if (Math.abs(shortest(wrap(pos), vOf[i])) < 2) { lastDrawn = NaN; if (ready && !raf) draw(pos); }
-      return bmp;
-    }).catch(() => { decoding[i] = null; });
-    return decoding[i];
+    }).catch(() => {}).finally(() => {
+      decoding[i] = false; active--;
+      if (waiters[i]) { waiters[i].forEach(fn => fn(bitmaps[i])); waiters[i] = null; }
+      pump();
+    });
+  }
+
+  // decode nhận VỊ TRÍ trên đường quay (v): xin giải mã gấp, trả về Promise khi xong.
+  function decode(v) {
+    const i = rawAt(v);
+    if (bitmaps[i]) return Promise.resolve(bitmaps[i]);
+    return new Promise(resolve => { (waiters[i] = waiters[i] || []).push(resolve); pump(); });
   }
 
   function evict() {
     if (decodedCount <= MAX_DECODED) return;
-    const here = wrap(pos), goal = wrap(targetU);
     const scored = [];
-    for (let v = 0; v < N; v++) if (bitmaps[TRACK[v]]) {
-      scored.push([Math.min(Math.abs(shortest(here, v)), Math.abs(shortest(goal, v))), TRACK[v]]);
-    }
+    for (let v = 0; v < N; v++) { const i = TRACK[v]; if (bitmaps[i]) scored.push([priority(i), i]); }
     scored.sort((a, b) => b[0] - a[0]);
     for (let k = 0; decodedCount > MAX_DECODED && k < scored.length; k++) {
+      if (scored[k][0] < 10) break;          // không xoá khung đang ở gần
       const i = scored[k][1];
-      if (scored[k][0] < 12) break;
       if (bitmaps[i].close) bitmaps[i].close(); bitmaps[i] = null; decodedCount--;
     }
   }
 
-  // Giải mã trước các khung trên đường đi từ vị trí hiện tại tới mục tiêu.
+  // Đánh dấu đoạn đường sắp quay qua → hàng đợi tự ưu tiên các khung đó (không giải mã ồ ạt).
   function prefetchPath(fromU, toU) {
-    const dir = Math.sign(toU - fromU) || 1;
-    const steps = Math.min(Math.abs(toU - fromU) + 8, 120);
-    for (let s = -3; s <= steps; s += 1) decode(fromU + dir * s);
+    wantFrom = fromU;
+    wantTo = fromU + Math.sign(toU - fromU) * Math.min(Math.abs(toU - fromU) + 6, 80);
+    pump();
   }
 
-  // Tải nền toàn bộ khung mở mắt, ưu tiên khung gần tư thế làm việc.
+  // Tải nền dữ liệu nén của mọi khung (nhẹ), rồi để hàng đợi tự lấp đầy bộ nhớ quanh vị trí hiện tại.
   function backgroundLoad() {
     const order = Array.from({ length: N }, (_, v) => v)
-      .sort((a, b) => Math.abs(shortest(workPose, a)) - Math.abs(shortest(workPose, b)));
+      .sort((a, b) => Math.abs(shortest(frontPose, a)) - Math.abs(shortest(frontPose, b)));
     let next = 0;
-    const worker = () => {
-      if (next >= order.length) return null;
-      const v = order[next++];
-      return loadImage(TRACK[v]).then(() => decodeAll ? decode(v) : null).catch(() => {}).then(worker);
-    };
-    for (let k = 0; k < 3; k++) worker();
+    const worker = () => next < order.length ? loadData(TRACK[order[next++]]).catch(() => {}).then(worker) : pump();
+    for (let k = 0; k < 4; k++) worker();
   }
 
   /* ---------- Vẽ ---------- */

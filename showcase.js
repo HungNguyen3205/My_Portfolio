@@ -54,14 +54,14 @@ window.PORTFOLIO_PROJECTS = [
   },
   {
     id: 'danava', name: 'DANAVA — Website thương hiệu', kicker: 'Website doanh nghiệp', tags: ['landing'], status: 'source',
-    repo: 'DANAVA.COM.VN', accent: '#2b4294', cover: { bg: '#2b4294', fg: '#ffffff', mark: 'DANAVA', line: 'Công nghệ tạo khả năng. Con người tạo giá trị.' },
+    repo: 'DANAVA.COM.VN', image: 'assets/shots/danava.webp?v=1', accent: '#2b4294', cover: { bg: '#2b4294', fg: '#ffffff', mark: 'DANAVA', line: 'Công nghệ tạo khả năng. Con người tạo giá trị.' },
     desc: 'Website mới cho DANAVA Solutions — điểm kết nối của hệ sinh thái 6 mảng dịch vụ.',
     features: ['Hệ thống nhận diện màu thương hiệu chặt chẽ', 'CMS tự quản trị trên cơ sở dữ liệu SQLite', 'Chuyển động GSAP, tối ưu ảnh bằng Sharp'],
     stack: ['Next.js 16', 'React 19', 'TypeScript', 'GSAP', 'SQLite']
   },
   {
     id: 'touch', name: 'Touch Art — Slow Garden', kicker: 'Website song ngữ Việt – Anh', tags: ['landing'], status: 'source',
-    repo: 'LandingPage_TouchArt', accent: '#384e41', cover: { bg: '#384e41', fg: '#f3ecd9', mark: 'Touch Art', line: 'Chạm sâu. Thả lỏng. Trở về mình.' },
+    repo: 'LandingPage_TouchArt', image: 'assets/shots/touch.webp?v=1', accent: '#384e41', cover: { bg: '#384e41', fg: '#f3ecd9', mark: 'Touch Art', line: 'Chạm sâu. Thả lỏng. Trở về mình.' },
     desc: 'Website thương hiệu cho studio trị liệu Touch Art tại Đà Nẵng, theo tinh thần “khu vườn chậm”.',
     features: ['14 trang chi tiết song ngữ Việt – Anh', 'Lá rơi, cành cây và nhạc nền nguyên bản 128 giây', 'Form đặt lịch tối giản chỉ với 3 trường'],
     stack: ['React', 'TypeScript', 'Vite']
@@ -82,21 +82,21 @@ window.PORTFOLIO_PROJECTS = [
   },
   {
     id: 'mkt', name: 'TOOL MKT — AI Content', kicker: 'Công cụ marketing AI · MVP', tags: ['ai'], status: 'source',
-    repo: 'TOOL-MKT', accent: '#c47a3c', cover: { bg: '#e9d8c6', fg: '#4a2f1d', mark: 'MKT', line: 'Viết bằng AI · Duyệt · Lên lịch đăng.' },
+    repo: 'TOOL-MKT', image: 'assets/shots/mkt.webp?v=1', accent: '#c47a3c', cover: { bg: '#e9d8c6', fg: '#4a2f1d', mark: 'MKT', line: 'Viết bằng AI · Duyệt · Lên lịch đăng.' },
     desc: 'Công cụ nội bộ tự sinh nội dung bằng AI và đăng bài lên Facebook Page.',
     features: ['Sinh nội dung bằng Ollama chạy local hoặc OpenAI', 'Quy trình duyệt bài giữa người viết và người duyệt', 'Lên lịch, đăng tự động qua Meta Graph API'],
     stack: ['React', 'Laravel 11', 'SQLite', 'Ollama']
   },
   {
     id: 'studio', name: 'DANAVA Video Studio', kicker: 'Tự động dựng video · AI', tags: ['ai'], status: 'source',
-    repo: 'Edit-Video-Automation', accent: '#d6a866', cover: { bg: '#151515', fg: '#f2d6a8', mark: 'Studio', line: 'Thêm video → Chọn phong cách → Xuất.' },
+    repo: 'Edit-Video-Automation', image: 'assets/shots/studio.webp?v=1', accent: '#d6a866', cover: { bg: '#151515', fg: '#f2d6a8', mark: 'Studio', line: 'Thêm video → Chọn phong cách → Xuất.' },
     desc: 'Thả một video, chọn phong cách, nhận về MP4 đã dựng hoàn chỉnh — không cần chỉnh timeline.',
     features: ['Tự nhận dạng lời nói tiếng Việt', 'Tự chọn cảnh, chữ và minh họa theo phong cách', 'AI chạy ngay trên máy với Ollama'],
     stack: ['Python', 'FastAPI', 'FFmpeg', 'Ollama']
   },
   {
     id: 'news', name: 'News Reading Tracker', kicker: 'Chrome Extension · Dashboard', tags: ['app'], status: 'source',
-    repo: 'DEMO_ExtensionReadingNews', demo: 'https://youtu.be/XWSmBlwre5w', accent: '#4f7fbf', cover: { bg: '#1e2a3a', fg: '#e8eef6', mark: 'Read.', line: 'Extension → API → Dashboard.' },
+    repo: 'DEMO_ExtensionReadingNews', image: 'assets/shots/news.webp?v=1', demo: 'https://youtu.be/XWSmBlwre5w', accent: '#4f7fbf', cover: { bg: '#1e2a3a', fg: '#e8eef6', mark: 'Read.', line: 'Extension → API → Dashboard.' },
     desc: 'Hệ thống thu thập và phân tích thời gian đọc báo thật của người dùng trên Chrome.',
     features: ['Tự nhận diện bài trên VnExpress, Dân Trí, Tuổi Trẻ', 'Đo thời gian đọc thật qua cuộn, chuột, trạng thái tab', 'Dashboard thống kê phiên đọc và timeline sự kiện'],
     stack: ['Chrome Extension', 'Laravel', 'Vue', 'SQLite']
