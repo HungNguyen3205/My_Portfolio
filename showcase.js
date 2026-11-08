@@ -188,19 +188,20 @@ filterButtons.forEach(btn => {
     applyFilter();
   });
 });
-function applyFilter() {
+// Lần chạy đầu không gắn "is-in": để thẻ tự bay vào khi cuộn tới (nếu gắn ngay, hiệu ứng đã chạy xong lúc thẻ còn ở ngoài màn hình).
+function applyFilter(fromUser = true) {
   const q = normalize(search.value.trim());
   let shown = 0;
   grid.querySelectorAll('.sc-card').forEach(card => {
     const ok = (activeFilter === 'all' || card.dataset.tags.split(' ').includes(activeFilter)) && normalize(card.textContent).includes(q);
     card.hidden = !ok;
-    if (ok) { shown++; card.classList.add('is-in'); }
+    if (ok) { shown++; if (fromUser) card.classList.add('is-in'); }
   });
   document.getElementById('result-status').textContent = 'Đang hiển thị ' + shown + ' / ' + projects.length + ' dự án';
   document.getElementById('empty-state').hidden = shown !== 0;
 }
-search.addEventListener('input', applyFilter);
-applyFilter();
+search.addEventListener('input', () => applyFilter());
+applyFilter(false);
 
 /* ---------- Con số (tính từ dữ liệu thật) ---------- */
 const techs = new Set(projects.flatMap(p => p.stack.map(s => s.replace(/\s\d+$/, ''))));
