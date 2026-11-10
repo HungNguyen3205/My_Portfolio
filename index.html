@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#191d23"><title>Nguyễn Nam Hùng — Những dòng code, những dấu ấn</title><meta name="description" content="Hành trình xây dựng website và ứng dụng của Nguyễn Nam Hùng. Xem video demo, khám phá dự án và trải nghiệm sản phẩm thực tế."><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23191d23'/%3E%3Ctext x='32' y='45' font-family='Arial,sans-serif' font-size='36' font-weight='900' text-anchor='middle' fill='%23c5bac4'%3EH%3C/text%3E%3C/svg%3E"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Outfit:wght@700;800;900&family=Playfair+Display:ital,wght@1,400;1,500&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="story.css"><link rel="stylesheet" href="exhibition.css"><link rel="stylesheet" href="avatar.css?v=3d-1"><link rel="stylesheet" href="intro.css?v=slate-1"><link rel="stylesheet" href="showcase.css?v=13"><script src="intro.js?v=seamless-2" defer></script></head><body>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#191d23"><title>Nguyễn Nam Hùng — Những dòng code, những dấu ấn</title><meta name="description" content="Hành trình xây dựng website và ứng dụng của Nguyễn Nam Hùng. Xem video demo, khám phá dự án và trải nghiệm sản phẩm thực tế."><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23191d23'/%3E%3Ctext x='32' y='45' font-family='Arial,sans-serif' font-size='36' font-weight='900' text-anchor='middle' fill='%23c5bac4'%3EH%3C/text%3E%3C/svg%3E"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Outfit:wght@700;800;900&family=Playfair+Display:ital,wght@1,400;1,500&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="story.css"><link rel="stylesheet" href="exhibition.css"><link rel="stylesheet" href="avatar.css?v=3d-1"><link rel="stylesheet" href="intro.css?v=slate-1"><link rel="stylesheet" href="showcase.css?v=15"><script src="intro.js?v=seamless-2" defer></script></head><body>
 <dialog class="portfolio-intro" id="portfolio-intro" aria-label="Màn hình mở đầu portfolio">
   <div class="intro-splash intro-game" id="intro-splash">
     <div class="game-hud-bar" aria-hidden="true">
@@ -328,6 +328,7 @@
         <button type="button" data-filter="landing" aria-pressed="false">Landing page &amp; website <span></span></button>
         <button type="button" data-filter="app" aria-pressed="false">Ứng dụng web <span></span></button>
         <button type="button" data-filter="ai" aria-pressed="false">AI &amp; tự động hóa <span></span></button>
+        <button type="button" data-filter="admin" aria-pressed="false">Có trang quản trị <span></span></button>
       </div>
       <label class="sc-search"><span class="sr-only">Tìm dự án hoặc công nghệ</span><input id="project-search" type="search" placeholder="Tìm dự án, công nghệ…" autocomplete="off"></label>
     </div>
@@ -335,6 +336,15 @@
     <div class="sc-grid" id="project-grid"></div>
     <p class="sc-empty" id="empty-state" hidden>Chưa có dự án khớp với từ khóa này. Hãy thử tên khác, ví dụ “React” hoặc “AI”.</p>
     <noscript><p class="sc-empty">Bật JavaScript để xem bộ sưu tập, hoặc xem trực tiếp trên <a href="https://github.com/HungNguyen3205">GitHub</a>.</p></noscript>
+    </div>
+
+    <div class="sc-backstage" id="backstage" aria-labelledby="backstage-title">
+      <div class="sc-backstage__head">
+        <p class="sc-kicker">Phía sau sân khấu · Admin</p>
+        <h3 id="backstage-title">Khách hàng thấy một nửa.<br><em>Nửa còn lại là trang quản trị.</em></h3>
+        <p>Đơn hàng, nội dung, phân quyền, thống kê — phần người vận hành dùng mỗi ngày. Ba hệ thống dưới đây được chụp trực tiếp từ trang quản trị — chọn một dự án để xem từng màn hình.</p>
+      </div>
+      <div class="sc-backstage__list" id="backstage-list"></div>
     </div>
 
     <div class="sc-lab">
@@ -393,6 +403,25 @@
 
 </div></main>
 
+<dialog class="sc-admin" id="admin-viewer" aria-labelledby="admin-title">
+  <div class="sc-admin__wrap">
+    <div class="sc-admin__head">
+      <div><p class="sc-admin__kicker">Phía sau sân khấu · <span id="admin-area"></span></p><h2 id="admin-title"></h2></div>
+      <button type="button" class="sc-admin__close" id="admin-close" aria-label="Đóng">✕</button>
+    </div>
+    <div class="sc-admin__body">
+      <figure class="sc-admin__stage">
+        <div class="sc-frame">
+          <div class="sc-frame__bar"><span class="sc-frame__dots"><i></i><i></i><i></i></span><span class="sc-frame__url" id="admin-url"></span></div>
+          <div class="sc-admin__screen" id="admin-screen"></div>
+        </div>
+        <figcaption class="sc-admin__cap"><button type="button" data-admin-step="-1" aria-label="Màn hình trước">←</button><span id="admin-cap" aria-live="polite"></span><button type="button" data-admin-step="1" aria-label="Màn hình sau">→</button></figcaption>
+      </figure>
+      <nav class="sc-admin__modules" id="admin-modules" aria-label="Các màn hình quản trị"></nav>
+    </div>
+    <div class="sc-admin__foot"><span id="admin-note"></span><a id="admin-link" target="_blank" rel="noopener noreferrer" hidden>Mở trang quản trị ↗</a></div>
+  </div>
+</dialog>
 <dialog id="cinema" aria-labelledby="cinema-title"><div class="cinema-head"><div><p class="eyebrow">PHÒNG CHIẾU / 01</p><h2 id="cinema-title">DANAVA Work <em>in motion.</em></h2></div><button id="close-cinema" aria-label="Đóng video">✕</button></div><video id="cinema-video" controls playsinline preload="none" poster="assets/danava-work-poster.jpg"><source src="assets/danava-work-demo.mp4" type="video/mp4"></video><div class="cinema-foot"><span>21 GIÂY · DEMO GIAO DIỆN</span><a href="https://workspace.danava.com.vn" target="_blank" rel="noopener noreferrer">Mở website ↗</a></div></dialog>
 <footer class="sc-footer"><a class="logo" href="#home">HÙNG<span>®</span></a><span>© <span id="year">2026</span> Nguyễn Nam Hùng · Thiết kế và lập trình bằng cả trái tim.</span><a href="#home">Trở về đầu trang ↑</a></footer>
-<script src="showcase.js?v=8"></script><script src="showcase-fx.js?v=2"></script><script src="album.js?v=9"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script src="avatar3d.js?v=1"></script></body></html>
+<script src="showcase.js?v=10"></script><script src="showcase-fx.js?v=2"></script><script src="album.js?v=9"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script src="avatar3d.js?v=1"></script></body></html>
