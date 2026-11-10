@@ -71,3 +71,16 @@
 @media(max-width:640px){.hero-centered .hero-wordmark{font-size:18vw}.hero-centered .hero-wordmark .wordmark-left{margin-right:-.075em}}
 .hero-centered .hero-wordmark .wordmark-left{margin-right:-.12em}
 @media(max-width:640px){.hero-centered .hero-wordmark .wordmark-left{margin-right:-.15em}}
+
+/* ===== Nhân vật & icon 3D (three.js — avatar3d.js) =====
+   .avatar-3d có đúng tỉ lệ ảnh gốc 1447x1087; canvas tràn thêm 12% mỗi phía để icon nổi không bị cắt. */
+.hero-centered .avatar-stage .avatar-fallback,
+.hero-centered .avatar-stage .avatar-3d{position:absolute;width:min(740px,64vw);height:auto;max-width:none;aspect-ratio:1447/1087;object-fit:contain;inset:50% auto auto 50%;transform:translate(-50%,-50%)!important;background:none;filter:none}
+.hero-centered .avatar-stage .avatar-3d{z-index:1;pointer-events:none}
+.avatar-3d canvas{position:absolute;left:-12%;top:-12%;width:124%;height:124%;display:block;pointer-events:auto;touch-action:pan-y;-webkit-tap-highlight-color:transparent}
+.avatar-3d canvas.is-hover{cursor:pointer}
+.avatar-stage:not(.avatar-ready) .avatar-3d{visibility:hidden}
+@media(max-width:640px){
+  .hero-centered .avatar-stage .avatar-fallback,
+  .hero-centered .avatar-stage .avatar-3d{width:min(470px,94vw)}
+}
